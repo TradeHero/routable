@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    android:versionCode="1"
+    android:versionName="1.0"
+    package="com.tradehero.route.sample">
+
+  <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="17"/>
+  <application
+      android:name="com.tradehero.route.sample.App"
+      android:label="@string/app_name">
+    <activity
+        android:name="com.tradehero.route.sample.MainActivity"
+        android:label="@string/app_name">
+
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+    </activity>
+
+    <activity android:name="com.tradehero.route.sample.UserActivity"/>
+  </application>
+
+</manifest>

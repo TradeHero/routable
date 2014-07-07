@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TestRouter</string>
+    <string name="click_me">Click me maybe</string>
+  <string name="click_me2">Click me already</string>
+</resources>
