@@ -9,6 +9,10 @@ public class PortfolioId {
 
   }
 
+  public PortfolioId(int portfolioId) {
+    this.portfolioId = portfolioId;
+  }
+
   public int getId() {
     return portfolioId;
   }

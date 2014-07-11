@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 import com.tradehero.route.Router;
+import com.tradehero.route.sample.key.PortfolioId;
 import com.tradehero.route.sample.key.UserBaseKey;
 
 public class MainActivity extends Activity {
@@ -29,7 +30,8 @@ public class MainActivity extends Activity {
       @Override public void onClick(View v) {
         Bundle bundle = new Bundle();
         UserBaseKey userBaseKey = new UserBaseKey(10);
-        router.save(bundle, userBaseKey, false);
+        PortfolioId portfolioId = new PortfolioId(20);
+        router.save(bundle, userBaseKey, portfolioId, false);
 
         Intent intent = new Intent(MainActivity.this, UserActivity.class);
         intent.putExtras(bundle);
