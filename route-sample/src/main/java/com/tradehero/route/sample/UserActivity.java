@@ -18,6 +18,6 @@ public class UserActivity extends DummySuperActivity {
     setContentView(R.layout.user);
 
     TextView userInfo = (TextView) findViewById(R.id.user);
-    userInfo.setText("User: " + userBaseKey.getUserId() + "\nPortfolio: " + portfolioId.getId());
+    userInfo.setText(getString(R.string.user_info, userBaseKey.getUserId(), portfolioId.getId()));
   }
 }
