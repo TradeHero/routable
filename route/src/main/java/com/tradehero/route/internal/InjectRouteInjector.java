@@ -3,13 +3,13 @@ package com.tradehero.route.internal;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-final class RouteInjector {
+final class InjectRouteInjector {
   private final String classPackage;
   private final String targetClass;
   private final String className;
   private Set<FieldBinding> fieldBinding = new LinkedHashSet<FieldBinding>();
 
-  RouteInjector(String classPackage, String className, String targetClass) {
+  InjectRouteInjector(String classPackage, String className, String targetClass) {
     this.classPackage = classPackage;
     this.className = className;
     this.targetClass = targetClass;
@@ -57,11 +57,11 @@ final class RouteInjector {
         .append(" == null) ")
         .append(fieldPath)
         .append(" = new ")
-        .append(binding.getType())
+        .append(binding.getBundleMethod())
         .append("();\n");
 
     builder.append("    ")
-        .append(binding.getType())
+        .append(binding.getBundleMethod())
         .append(RouterProcessor.SUFFIX)
         .append(".inject(target.")
         .append(binding.getName())

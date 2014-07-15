@@ -1,13 +1,12 @@
 package com.tradehero.route.internal;
 
-import com.tradehero.route.Router;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 final class RoutePropertyInjector {
   private final String classPackage;
   private final String targetClass;
-  private String bundleKey;
+  private final String bundleKey;
   private final String className;
   private final Set<RoutePropertyBinding> fieldBinding = new LinkedHashSet<RoutePropertyBinding>();
   private String parentInjector;
@@ -28,16 +27,13 @@ final class RoutePropertyInjector {
     builder.append("// Generated code by Route. Do not modify!\n");
     builder.append("package ").append(classPackage).append(";\n\n");
     builder.append("import android.os.Bundle;\n");
-    builder.append("import ").append(Router.class.getName()).append(".Parser;\n\n");
     builder.append("public class ").append(className).append(" {\n");
 
     emitInject(builder);
     builder.append("\n\n");
 
     emitSaver(builder);
-    builder.append("\n\n");
-
-    emitReset(builder);
+    builder.append("\n");
 
     builder.append("}\n");
 
@@ -63,10 +59,6 @@ final class RoutePropertyInjector {
         .append("\", toWrite);\n");
     builder.append("  ")
         .append("}\n");
-  }
-
-  private void emitReset(StringBuilder builder) {
-    // TODO what should be reseted after activity/fragment destroyed?
   }
 
   private void emitInject(StringBuilder builder) {
@@ -113,12 +105,13 @@ final class RoutePropertyInjector {
         .append("target.")
         .append(binding.getName())
         .append(binding.isMethod() ? "(" : " = ")
-        .append("Parser.parse(source.get(\"")
+
+        .append("source.get")
+        .append(binding.getBundleMethod())
+        .append("(\"")
         .append(binding.getBundleKey())
-        .append("\"), ")
-        .append(binding.getType())
-        .append(".class")
-        .append(")")
+        .append("\")")
+
         .append(binding.isMethod() ? ")" : "")
         .append(";\n");
     builder.append("    ")
@@ -133,14 +126,13 @@ final class RoutePropertyInjector {
     builder.append("    ")
         .append("toWrite = flat ? dest : new Bundle();\n");
     builder.append("    ")
-        .append("Parser.put(toWrite, \"")
+        .append("toWrite.put")
+        .append(binding.getBundleMethod())
+        .append("(\"")
         .append(binding.getBundleKey())
         .append("\", source.")
         .append(binding.getName())
         .append(binding.isMethod() ? "()" : "")
-        .append(", ")
-        .append(binding.getType())
-        .append(".class")
         .append(")")
         .append(";\n");
   }

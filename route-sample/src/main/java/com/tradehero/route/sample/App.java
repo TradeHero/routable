@@ -9,7 +9,7 @@ public class App extends Application {
   @Override public void onCreate() {
     super.onCreate();
 
-    router = Router.with(this).registerRoutes(UserActivity.class);
+    router = Router.of(this).registerRoutes(UserActivity.class);
   }
 
   public Router getRouter() {
