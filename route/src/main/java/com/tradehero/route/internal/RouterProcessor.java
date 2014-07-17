@@ -1,6 +1,5 @@
 package com.tradehero.route.internal;
 
-import com.tradehero.route.InjectRoute;
 import com.tradehero.route.RouteProperty;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -42,6 +41,7 @@ public class RouterProcessor extends AbstractProcessor {
   private Elements elementUtils;
   private Types typeUtils;
   private Filer filer;
+  private TypeToBundleMethodMap typeToBundleMethodMap;
 
   @Override public synchronized void init(ProcessingEnvironment env) {
     super.init(env);
@@ -49,6 +49,8 @@ public class RouterProcessor extends AbstractProcessor {
     elementUtils = env.getElementUtils();
     typeUtils = env.getTypeUtils();
     filer = env.getFiler();
+    typeToBundleMethodMap = new TypeToBundleMethodMap(processingEnv.getElementUtils(),
+        processingEnv.getTypeUtils());
   }
 
   @Override public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
@@ -91,7 +93,6 @@ public class RouterProcessor extends AbstractProcessor {
 
   @Override public Set<String> getSupportedAnnotationTypes() {
     Set<String> supportTypes = new LinkedHashSet<String>();
-    supportTypes.add(InjectRoute.class.getCanonicalName());
     supportTypes.add(RouteProperty.class.getCanonicalName());
 
     return supportTypes;
@@ -167,13 +168,14 @@ public class RouterProcessor extends AbstractProcessor {
       return;
     }
 
-    TypeToBundleMethodMap typeToBundleMethodMap = new TypeToBundleMethodMap(processingEnv.getElementUtils(), processingEnv.getTypeUtils());
-
+    boolean isMethod = element.getKind() == METHOD;
+    if (!isMethod && typeToBundleMethodMap.convert(elementType) == null) {
+      return;
+    }
     // Assemble information on the injection point.
     String name = element.getSimpleName().toString();
     String bundleMethod = null;
     String bundleKey = element.getAnnotation(RouteProperty.class).value();
-    boolean isMethod = element.getKind() == METHOD;
     if (isMethod) {
       // check this method is set method and for which property
       ExecutableElement executableElement = (ExecutableElement) element;
@@ -244,15 +246,17 @@ public class RouterProcessor extends AbstractProcessor {
     Map<TypeElement, InjectRouteInjector> targetClassMap = new LinkedHashMap<TypeElement, InjectRouteInjector>();
     Set<String> erasedTargetNames = new LinkedHashSet<String>();
 
-    // Process each @InjectRoute element.
-    for (Element element : env.getElementsAnnotatedWith(InjectRoute.class)) {
+    // Process each @RouteProperty element.
+    for (Element element : env.getElementsAnnotatedWith(RouteProperty.class)) {
       try {
-        parseInjectRoute(element, targetClassMap, erasedTargetNames);
+        if (element.getKind() != CLASS) {
+          parseInjectRoute(element, targetClassMap, erasedTargetNames);
+        }
       } catch (Exception e) {
         StringWriter stackTrace = new StringWriter();
         e.printStackTrace(new PrintWriter(stackTrace));
 
-        error(element, "Unable to generate injector for @InjectRoute.\n\n%s", stackTrace);
+        error(element, "Unable to generate injector for @RouteProperty.\n\n%s", stackTrace);
       }
     }
 
@@ -271,7 +275,12 @@ public class RouterProcessor extends AbstractProcessor {
     }
 
     // Verify common generated code restrictions.
-    if (isValidForGeneratedCode(InjectRoute.class, "fields", element)) {
+    if (isValidForGeneratedCode(RouteProperty.class, "fields", element)) {
+      return;
+    }
+
+
+    if (element.getKind() == METHOD || typeToBundleMethodMap.convert(elementType) != null) {
       return;
     }
 
