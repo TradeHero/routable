@@ -1,13 +1,26 @@
 package com.tradehero.route.internal;
 
 import com.tradehero.route.RouteProperty;
-
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.lang.annotation.Annotation;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.*;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -15,12 +28,6 @@ import javax.lang.model.type.TypeVariable;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.JavaFileObject;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.lang.annotation.Annotation;
-import java.util.*;
 
 import static javax.lang.model.element.ElementKind.CLASS;
 import static javax.lang.model.element.ElementKind.METHOD;
@@ -140,7 +147,9 @@ public class RouterProcessor extends AbstractProcessor {
       typeElement = (TypeElement) ((DeclaredType) type).asElement();
       if (parents.contains(typeElement.toString())) {
         String packageName = getPackageName(typeElement);
-        return packageName + "." + getClassName(typeElement, packageName);
+        return (packageName.length() == 0) ?
+            getClassName(typeElement, packageName) :
+            packageName + "." + getClassName(typeElement, packageName);
       }
     }
   }
@@ -306,7 +315,7 @@ public class RouterProcessor extends AbstractProcessor {
   }
 
   private static String getClassName(TypeElement type, String packageName) {
-    int packageLen = packageName.length() + 1;
+    int packageLen = packageName.length() == 0 ? 0 : packageName.length() + 1;
     return type.getQualifiedName().toString().substring(packageLen).replace('.', '$');
   }
 

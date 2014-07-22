@@ -18,16 +18,22 @@ final class RoutePropertyInjector {
     this.bundleKey = bundleKey;
   }
 
+  private boolean hasEmptyPackage() {
+    return classPackage == null || classPackage.length() == 0;
+  }
+
   String getFqcn() {
-    return classPackage + "." + className;
+    return hasEmptyPackage() ? className : classPackage + "." + className;
   }
 
   String brewJava() {
     StringBuilder builder = new StringBuilder();
     builder.append("// Generated code by Route. Do not modify!\n");
-    builder.append("package ").append(classPackage).append(";\n\n");
+    if (!hasEmptyPackage()) {
+      builder.append("package ").append(classPackage).append(";\n\n");
+    }
     builder.append("import android.os.Bundle;\n");
-    builder.append("public class ").append(className).append(" {\n");
+    builder.append("public final class ").append(className).append(" {\n");
 
     emitInject(builder);
     builder.append("\n\n");
