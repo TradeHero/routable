@@ -27,13 +27,8 @@ final class InjectRouteInjector {
     builder.append("public class ").append(className).append(" {\n");
     emitInject(builder);
     builder.append('\n');
-    emitReset(builder);
     builder.append("}\n");
     return builder.toString();
-  }
-
-  private void emitReset(StringBuilder builder) {
-    // TODO what to reset when activity/fragment is destroyed?
   }
 
   private void emitInject(StringBuilder builder) {

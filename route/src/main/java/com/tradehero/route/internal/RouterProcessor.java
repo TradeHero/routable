@@ -1,26 +1,13 @@
 package com.tradehero.route.internal;
 
 import com.tradehero.route.RouteProperty;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.lang.annotation.Annotation;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
+import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -28,6 +15,12 @@ import javax.lang.model.type.TypeVariable;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.JavaFileObject;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.lang.annotation.Annotation;
+import java.util.*;
 
 import static javax.lang.model.element.ElementKind.CLASS;
 import static javax.lang.model.element.ElementKind.METHOD;
@@ -49,8 +42,7 @@ public class RouterProcessor extends AbstractProcessor {
     elementUtils = env.getElementUtils();
     typeUtils = env.getTypeUtils();
     filer = env.getFiler();
-    typeToBundleMethodMap = new TypeToBundleMethodMap(processingEnv.getElementUtils(),
-        processingEnv.getTypeUtils());
+    typeToBundleMethodMap = new TypeToBundleMethodMap(elementUtils, typeUtils);
   }
 
   @Override public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
@@ -153,7 +145,8 @@ public class RouterProcessor extends AbstractProcessor {
     }
   }
 
-  private void parseRouteProperty(Element element, Map<TypeElement, RoutePropertyInjector> targetClassMap, Set<String> injectableTargetClasses) {
+  private void parseRouteProperty(Element element, Map<TypeElement,
+      RoutePropertyInjector> targetClassMap, Set<String> injectableTargetClasses) {
     TypeElement enclosingElement = (TypeElement) element.getEnclosingElement();
 
     // Verify that the target type extends from Serializable.
@@ -183,8 +176,9 @@ public class RouterProcessor extends AbstractProcessor {
       if (name.startsWith("set")) {
         if (methodParameters.size() != 1) {
           throw new IllegalStateException(String.format(
-              "Setter method %s that annotated with @RouteProperty " +
-                  "can have exactly one parameter", executableElement.getSimpleName()));
+              "Setter method %s that annotated with @RouteProperty "
+                  + "can have exactly one parameter", executableElement.getSimpleName()
+          ));
         }
 
         VariableElement val = methodParameters.get(0);
@@ -205,7 +199,7 @@ public class RouterProcessor extends AbstractProcessor {
         // extract getter name from getter method, example: getNumber ---> number
         for (int i = 0; i < name.length(); ++i) {
           if (name.charAt(i) >= 'A' && name.charAt(i) <= 'Z') {
-            bundleKey = Character.toLowerCase(name.charAt(i)) + name.substring(i+1);
+            bundleKey = Character.toLowerCase(name.charAt(i)) + name.substring(i + 1);
             break;
           }
         }
@@ -214,8 +208,8 @@ public class RouterProcessor extends AbstractProcessor {
       bundleMethod = typeToBundleMethodMap.convert(elementType);
     }
 
-    RoutePropertyInjector routeInjector = getOrCreateTargetRoutePropertyClass(targetClassMap,
-        enclosingElement);
+    RoutePropertyInjector routeInjector =
+        getOrCreateTargetRoutePropertyClass(targetClassMap, enclosingElement);
     RoutePropertyBinding binding = new RoutePropertyBinding(name, bundleMethod, bundleKey, isMethod);
     routeInjector.addBinding(binding);
 
@@ -243,7 +237,8 @@ public class RouterProcessor extends AbstractProcessor {
   }
 
   private Map<TypeElement, InjectRouteInjector> findAndParseInjectRouteTargets(RoundEnvironment env) {
-    Map<TypeElement, InjectRouteInjector> targetClassMap = new LinkedHashMap<TypeElement, InjectRouteInjector>();
+    Map<TypeElement, InjectRouteInjector> targetClassMap = new LinkedHashMap<TypeElement,
+        InjectRouteInjector>();
     Set<String> erasedTargetNames = new LinkedHashSet<String>();
 
     // Process each @RouteProperty element.
@@ -296,8 +291,8 @@ public class RouterProcessor extends AbstractProcessor {
     erasedTargetNames.add(enclosingElement.toString());
   }
 
-  private InjectRouteInjector getOrCreateTargetClass(Map<TypeElement, InjectRouteInjector> targetClassMap,
-      TypeElement enclosingElement) {
+  private InjectRouteInjector getOrCreateTargetClass(Map<TypeElement,
+      InjectRouteInjector> targetClassMap, TypeElement enclosingElement) {
     InjectRouteInjector injectRouteInjector = targetClassMap.get(enclosingElement);
     if (injectRouteInjector == null) {
       String targetType = enclosingElement.getQualifiedName().toString();
