@@ -33,6 +33,8 @@
     <android.platform>16</android.platform>
     <junit.version>4.10</junit.version>
     <robolectric.version>2.3</robolectric.version>
+    <compile-testing.version>0.4</compile-testing.version>
+    <truth.version>0.13</truth.version>
   </properties>
 
   <dependencyManagement>
@@ -51,6 +53,16 @@
         <groupId>org.robolectric</groupId>
         <artifactId>robolectric</artifactId>
         <version>${robolectric.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.testing.compile</groupId>
+        <artifactId>compile-testing</artifactId>
+        <version>${compile-testing.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.truth0</groupId>
+        <artifactId>truth</artifactId>
+        <version>${truth.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
