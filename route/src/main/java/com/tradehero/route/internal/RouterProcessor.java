@@ -38,18 +38,12 @@ import static javax.tools.Diagnostic.Kind.ERROR;
 public class RouterProcessor extends AbstractProcessor {
   public static final String SUFFIX = "$$Routable";
 
-  private Elements elementUtils;
-  private Types typeUtils;
-  private Filer filer;
   private TypeToBundleMethodMap typeToBundleMethodMap;
 
   @Override public synchronized void init(ProcessingEnvironment env) {
     super.init(env);
 
-    elementUtils = env.getElementUtils();
-    typeUtils = env.getTypeUtils();
-    filer = env.getFiler();
-    typeToBundleMethodMap = new TypeToBundleMethodMap(elementUtils, typeUtils);
+    typeToBundleMethodMap = new TypeToBundleMethodMap(elementUtils(), typeUtils());
   }
 
   @Override public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
@@ -62,7 +56,7 @@ public class RouterProcessor extends AbstractProcessor {
       InjectRouteInjector injectRouteInjector = entry.getValue();
 
       try {
-        JavaFileObject jfo = filer.createSourceFile(injectRouteInjector.getFqcn(), typeElement);
+        JavaFileObject jfo = filer().createSourceFile(injectRouteInjector.getFqcn(), typeElement);
         Writer writer = jfo.openWriter();
         writer.write(injectRouteInjector.brewJava());
         writer.flush();
@@ -77,7 +71,7 @@ public class RouterProcessor extends AbstractProcessor {
       RoutePropertyInjector routeInjector = entry.getValue();
 
       try {
-        JavaFileObject jfo = filer.createSourceFile(routeInjector.getFqcn(), typeElement);
+        JavaFileObject jfo = filer().createSourceFile(routeInjector.getFqcn(), typeElement);
         Writer writer = jfo.openWriter();
         writer.write(routeInjector.brewJava());
         writer.flush();
@@ -320,7 +314,7 @@ public class RouterProcessor extends AbstractProcessor {
   }
 
   private String getPackageName(TypeElement type) {
-    return elementUtils.getPackageOf(type).getQualifiedName().toString();
+    return elementUtils().getPackageOf(type).getQualifiedName().toString();
   }
 
   private boolean isValidForGeneratedCode(Class<? extends Annotation> annotationClass,
@@ -361,5 +355,17 @@ public class RouterProcessor extends AbstractProcessor {
       message = String.format(message, args);
     }
     processingEnv.getMessager().printMessage(ERROR, message, element);
+  }
+
+  private Elements elementUtils() {
+    return processingEnv.getElementUtils();
+  }
+
+  private Types typeUtils() {
+    return processingEnv.getTypeUtils();
+  }
+
+  private Filer filer() {
+    return processingEnv.getFiler();
   }
 }
