@@ -169,9 +169,33 @@ public class RouterProcessor extends AbstractProcessor {
       return;
     }
     // Assemble information on the injection point.
-    String name = element.getSimpleName().toString();
-    String bundleMethod = null;
+    String bundleMethod = getBundleMethod(element, elementType);
+
     String bundleKey = element.getAnnotation(RouteProperty.class).value();
+    String name = element.getSimpleName().toString();
+    if (isMethod) {
+      if (bundleKey == null || bundleKey.length() == 0) {
+        // extract getter name from getter method, example: getNumber ---> number
+        for (int i = 0; i < name.length(); ++i) {
+          if (name.charAt(i) >= 'A' && name.charAt(i) <= 'Z') {
+            bundleKey = Character.toLowerCase(name.charAt(i)) + name.substring(i + 1);
+            break;
+          }
+        }
+      }
+    }
+
+    RoutePropertyInjector routeInjector =
+        getOrCreateTargetRoutePropertyClass(targetClassMap, enclosingElement);
+    RoutePropertyBinding binding = new RoutePropertyBinding(name, bundleMethod, bundleKey, isMethod);
+    routeInjector.addBinding(binding);
+
+    injectableTargetClasses.add(enclosingElement.toString());
+  }
+
+  private String getBundleMethod(Element element, TypeMirror elementType) {
+    boolean isMethod = element.getKind() == METHOD;
+    String name = element.getSimpleName().toString();
     if (isMethod) {
       // check this method is set method and for which property
       ExecutableElement executableElement = (ExecutableElement) element;
@@ -185,7 +209,7 @@ public class RouterProcessor extends AbstractProcessor {
         }
 
         VariableElement val = methodParameters.get(0);
-        bundleMethod = typeToBundleMethodMap.convert(val.asType());
+        return typeToBundleMethodMap.convert(val.asType());
       }
 
       if (name.startsWith("get") || name.startsWith("is") || name.startsWith("has")) {
@@ -195,28 +219,12 @@ public class RouterProcessor extends AbstractProcessor {
               executableElement.getSimpleName()));
         }
 
-        bundleMethod = typeToBundleMethodMap.convert(executableElement.getReturnType());
-      }
-
-      if (bundleKey == null || bundleKey.length() == 0) {
-        // extract getter name from getter method, example: getNumber ---> number
-        for (int i = 0; i < name.length(); ++i) {
-          if (name.charAt(i) >= 'A' && name.charAt(i) <= 'Z') {
-            bundleKey = Character.toLowerCase(name.charAt(i)) + name.substring(i + 1);
-            break;
-          }
-        }
+        return typeToBundleMethodMap.convert(executableElement.getReturnType());
       }
     } else {
-      bundleMethod = typeToBundleMethodMap.convert(elementType);
+      return typeToBundleMethodMap.convert(elementType);
     }
-
-    RoutePropertyInjector routeInjector =
-        getOrCreateTargetRoutePropertyClass(targetClassMap, enclosingElement);
-    RoutePropertyBinding binding = new RoutePropertyBinding(name, bundleMethod, bundleKey, isMethod);
-    routeInjector.addBinding(binding);
-
-    injectableTargetClasses.add(enclosingElement.toString());
+    return null;
   }
 
   private RoutePropertyInjector getOrCreateTargetRoutePropertyClass(
