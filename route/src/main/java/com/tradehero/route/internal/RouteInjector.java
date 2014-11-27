@@ -3,15 +3,15 @@ package com.tradehero.route.internal;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-final class RoutePropertyInjector {
+final class RouteInjector {
   private final String classPackage;
   private final String targetClass;
   private final String bundleKey;
   private final String className;
-  private final Set<RoutePropertyBinding> fieldBinding = new LinkedHashSet<RoutePropertyBinding>();
+  private final Set<FieldBinding> fieldBinding = new LinkedHashSet<FieldBinding>();
   private String parentInjector;
 
-  RoutePropertyInjector(String classPackage, String className, String targetClass, String bundleKey) {
+  RouteInjector(String classPackage, String className, String targetClass, String bundleKey) {
     this.classPackage = classPackage;
     this.className = className;
     this.targetClass = targetClass;
@@ -29,6 +29,7 @@ final class RoutePropertyInjector {
       builder.append("package ").append(classPackage).append(";\n\n");
     }
     builder.append("import android.os.Bundle;\n");
+    builder.append("import com.tradehero.route.Router;\n\n");
     builder.append("public final class ").append(className).append(" {\n");
 
     emitInject(builder);
@@ -52,8 +53,9 @@ final class RoutePropertyInjector {
     builder.append("    ")
         .append("Bundle toWrite = null;\n");
 
-    for (RoutePropertyBinding binding: fieldBinding) {
-      emitSaveBinding(builder, binding);
+    for (FieldBinding binding: fieldBinding) {
+      if (binding instanceof RoutePropertyBinding)
+      emitSaveBinding(builder, (RoutePropertyBinding) binding);
     }
 
     builder.append("\n    ")
@@ -88,11 +90,33 @@ final class RoutePropertyInjector {
     builder.append("    ")
         .append("}\n");
 
-    for (RoutePropertyBinding binding: fieldBinding) {
-      emitInjectBinding(builder, binding);
+    for (FieldBinding binding: fieldBinding) {
+      if (binding instanceof RoutePropertyBinding) {
+        emitInjectBinding(builder, (RoutePropertyBinding) binding);
+      } else {
+        emitRedirectBinding(builder, binding);
+      }
     }
 
     builder.append("  }");
+  }
+
+  private void emitRedirectBinding(StringBuilder builder, FieldBinding binding) {
+    String fieldPath = "target." + binding.getName();
+
+    builder.append("    ")
+        .append("if (")
+        .append(fieldPath)
+        .append(" == null) ")
+        .append(fieldPath)
+        .append(" = new ")
+        .append(binding.getBundleMethod())
+        .append("();\n");
+
+    builder.append("    ")
+        .append("Router.getInstance().inject(target.")
+        .append(binding.getName())
+        .append(", source);\n");
   }
 
   private void emitInjectBinding(StringBuilder builder, RoutePropertyBinding binding) {
@@ -140,7 +164,7 @@ final class RoutePropertyInjector {
         .append(";\n");
   }
 
-  public void addBinding(RoutePropertyBinding binding) {
+  public void addBinding(FieldBinding binding) {
     fieldBinding.add(binding);
   }
 

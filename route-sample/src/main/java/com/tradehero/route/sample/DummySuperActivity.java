@@ -8,4 +8,6 @@ import com.tradehero.route.sample.key.UserBaseKey;
 public class DummySuperActivity extends Activity {
   @RouteProperty PortfolioId portfolioId;
   @RouteProperty UserBaseKey userBaseKey;
+
+  @RouteProperty String test;
 }

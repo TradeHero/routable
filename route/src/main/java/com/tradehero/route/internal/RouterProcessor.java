@@ -47,19 +47,10 @@ public class RouterProcessor extends AbstractProcessor {
   }
 
   @Override public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
-    writeRoutePropertyRoute(env);
-
-    writeInjectRoute(env);
-
-    return true;
-  }
-
-  private void writeRoutePropertyRoute(RoundEnvironment env) {
-    Map<TypeElement, RoutePropertyInjector> routePropertyInjectorMap =
-        findAndParseRoutePropertyTargets(env);
-    for (Map.Entry<TypeElement, RoutePropertyInjector> entry : routePropertyInjectorMap.entrySet()) {
+    Map<TypeElement, RouteInjector> routeInjectorMap = findAndParseRouteTargets(env);
+    for (Map.Entry<TypeElement, RouteInjector> entry : routeInjectorMap.entrySet()) {
       TypeElement typeElement = entry.getKey();
-      RoutePropertyInjector routeInjector = entry.getValue();
+      RouteInjector routeInjector = entry.getValue();
 
       try {
         JavaFileObject jfo = filer().createSourceFile(routeInjector.getFqcn(), typeElement);
@@ -71,46 +62,7 @@ public class RouterProcessor extends AbstractProcessor {
         error(typeElement, "Unable to write injector for type %s: %s", typeElement, e.getMessage());
       }
     }
-  }
-
-  private void writeInjectRoute(RoundEnvironment env) {
-    Map<TypeElement, InjectRouteInjector> targetClassMap = findAndParseInjectRouteTargets(env);
-    for (Map.Entry<TypeElement, InjectRouteInjector> entry : targetClassMap.entrySet()) {
-      TypeElement typeElement = entry.getKey();
-      InjectRouteInjector injectRouteInjector = entry.getValue();
-
-      try {
-        JavaFileObject jfo = filer().createSourceFile(injectRouteInjector.getFqcn(), typeElement);
-        Writer writer = jfo.openWriter();
-        writer.write(injectRouteInjector.brewJava());
-        writer.flush();
-        writer.close();
-      } catch (IOException e) {
-        error(typeElement, "Unable to write injector for type %s: %s", typeElement, e.getMessage());
-      }
-    }
-  }
-
-  private Map<TypeElement, InjectRouteInjector> findAndParseInjectRouteTargets(RoundEnvironment env) {
-    Map<TypeElement, InjectRouteInjector> targetClassMap = new LinkedHashMap<TypeElement,
-        InjectRouteInjector>();
-    Set<String> erasedTargetNames = new LinkedHashSet<String>();
-
-    // Process each @RouteProperty element.
-    for (Element element : env.getElementsAnnotatedWith(RouteProperty.class)) {
-      try {
-        if (element.getKind() != CLASS) {
-          parseInjectRoute(element, targetClassMap, erasedTargetNames);
-        }
-      } catch (Exception e) {
-        StringWriter stackTrace = new StringWriter();
-        e.printStackTrace(new PrintWriter(stackTrace));
-
-        error(element, "Unable to generate injector for @RouteProperty.\n\n%s", stackTrace);
-      }
-    }
-
-    return targetClassMap;
+    return true;
   }
 
   @Override public Set<String> getSupportedAnnotationTypes() {
@@ -124,9 +76,8 @@ public class RouterProcessor extends AbstractProcessor {
     return SourceVersion.latestSupported();
   }
 
-  private Map<TypeElement, RoutePropertyInjector> findAndParseRoutePropertyTargets(RoundEnvironment env) {
-    Map<TypeElement, RoutePropertyInjector> targetClassMap =
-        new LinkedHashMap<TypeElement, RoutePropertyInjector>();
+  private Map<TypeElement, RouteInjector> findAndParseRouteTargets(RoundEnvironment env) {
+    Map<TypeElement, RouteInjector> targetClassMap = new LinkedHashMap<TypeElement, RouteInjector>();
     Set<String> injectableTargetClasses = new LinkedHashSet<String>();
 
     // Process each @RouteProperty element.
@@ -144,10 +95,24 @@ public class RouterProcessor extends AbstractProcessor {
     }
 
     // Try to find a parent injector for each injector.
-    for (Map.Entry<TypeElement, RoutePropertyInjector> entry : targetClassMap.entrySet()) {
+    for (Map.Entry<TypeElement, RouteInjector> entry : targetClassMap.entrySet()) {
       String parentClassFqcn = findParentFqcn(entry.getKey(), injectableTargetClasses);
       if (parentClassFqcn != null) {
         entry.getValue().setParentInjector(parentClassFqcn + SUFFIX);
+      }
+    }
+
+    // Process each @RouteProperty element.
+    for (Element element : env.getElementsAnnotatedWith(RouteProperty.class)) {
+      try {
+        if (element.getKind() != CLASS) {
+          parseInjectRoute(element, targetClassMap, injectableTargetClasses);
+        }
+      } catch (Exception e) {
+        StringWriter stackTrace = new StringWriter();
+        e.printStackTrace(new PrintWriter(stackTrace));
+
+        error(element, "Unable to generate injector for @RouteProperty.\n\n%s", stackTrace);
       }
     }
 
@@ -177,8 +142,7 @@ public class RouterProcessor extends AbstractProcessor {
     }
   }
 
-  private void parseRouteProperty(Element element, Map<TypeElement,
-      RoutePropertyInjector> targetClassMap, Set<String> injectableTargetClasses) {
+  private void parseRouteProperty(Element element, Map<TypeElement, RouteInjector> targetClassMap, Set<String> injectableTargetClasses) {
     TypeElement enclosingElement = (TypeElement) element.getEnclosingElement();
 
     // Verify that the target type extends from Serializable.
@@ -214,7 +178,7 @@ public class RouterProcessor extends AbstractProcessor {
       }
     }
 
-    RoutePropertyInjector routeInjector =
+    RouteInjector routeInjector =
         getOrCreateTargetRoutePropertyClass(targetClassMap, enclosingElement);
     RoutePropertyBinding binding = new RoutePropertyBinding(name, bundleMethod, bundleKey, isMethod);
     routeInjector.addBinding(binding);
@@ -256,9 +220,9 @@ public class RouterProcessor extends AbstractProcessor {
     return null;
   }
 
-  private RoutePropertyInjector getOrCreateTargetRoutePropertyClass(
-      Map<TypeElement, RoutePropertyInjector> targetClassMap, TypeElement enclosingElement) {
-    RoutePropertyInjector routeInjector = targetClassMap.get(enclosingElement);
+  private RouteInjector getOrCreateTargetRoutePropertyClass(
+      Map<TypeElement, RouteInjector> targetClassMap, TypeElement enclosingElement) {
+    RouteInjector routeInjector = targetClassMap.get(enclosingElement);
     if (routeInjector == null) {
       String targetType = enclosingElement.getQualifiedName().toString();
       String classPackage = getPackageName(enclosingElement);
@@ -270,13 +234,13 @@ public class RouterProcessor extends AbstractProcessor {
           && classRouteProperty.value().length() > 0) {
         bundleKey = classRouteProperty.value();
       }
-      routeInjector = new RoutePropertyInjector(classPackage, className, targetType, bundleKey);
+      routeInjector = new RouteInjector(classPackage, className, targetType, bundleKey);
       targetClassMap.put(enclosingElement, routeInjector);
     }
     return routeInjector;
   }
 
-  private void parseInjectRoute(Element element, Map<TypeElement, InjectRouteInjector> targetClassMap,
+  private void parseInjectRoute(Element element, Map<TypeElement, RouteInjector> targetClassMap,
       Set<String> erasedTargetNames) {
     TypeElement enclosingElement = (TypeElement) element.getEnclosingElement();
 
@@ -300,7 +264,7 @@ public class RouterProcessor extends AbstractProcessor {
     String name = element.getSimpleName().toString();
     String type = elementType.toString();
 
-    InjectRouteInjector injectRouteInjector = getOrCreateTargetClass(targetClassMap, enclosingElement);
+    RouteInjector injectRouteInjector = getOrCreateTargetClass(targetClassMap, enclosingElement);
     FieldBinding binding = new FieldBinding(name, type);
     injectRouteInjector.addBinding(binding);
 
@@ -308,15 +272,14 @@ public class RouterProcessor extends AbstractProcessor {
     erasedTargetNames.add(enclosingElement.toString());
   }
 
-  private InjectRouteInjector getOrCreateTargetClass(Map<TypeElement,
-      InjectRouteInjector> targetClassMap, TypeElement enclosingElement) {
-    InjectRouteInjector injectRouteInjector = targetClassMap.get(enclosingElement);
+  private RouteInjector getOrCreateTargetClass(Map<TypeElement, RouteInjector> targetClassMap, TypeElement enclosingElement) {
+    RouteInjector injectRouteInjector = targetClassMap.get(enclosingElement);
     if (injectRouteInjector == null) {
       String targetType = enclosingElement.getQualifiedName().toString();
       String classPackage = getPackageName(enclosingElement);
       String className = getClassName(enclosingElement, classPackage) + SUFFIX;
 
-      injectRouteInjector = new InjectRouteInjector(classPackage, className, targetType);
+      injectRouteInjector = new RouteInjector(classPackage, className, targetType, null);
       targetClassMap.put(enclosingElement, injectRouteInjector);
     }
     return injectRouteInjector;
