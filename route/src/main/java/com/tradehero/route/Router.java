@@ -29,6 +29,16 @@ public class Router {
   public Router() {
   }
 
+  private static final Router router = new Router();
+
+  /**
+   * A globally accessible Router instance that will work for
+   * most use cases.
+   */
+  public static Router getInstance() {
+    return router;
+  }
+
   /**
    * Creates a new Router
    *
@@ -474,14 +484,6 @@ public class Router {
     }
     SAVERS.put(cls, inject);
     return inject;
-  }
-
-  public static Router of(Context context) {
-    return new Router(context);
-  }
-
-  public static Router of(Context context, Class<?>... targets) {
-    return of(context).registerRoutes(targets);
   }
 
   public Router registerRoutes(Class<?>... targets) {

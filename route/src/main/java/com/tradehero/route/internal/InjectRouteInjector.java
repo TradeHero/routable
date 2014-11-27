@@ -26,6 +26,7 @@ final class InjectRouteInjector {
       builder.append("package ").append(classPackage).append(";\n\n");
     }
     builder.append("import android.os.Bundle;\n\n");
+    builder.append("import com.tradehero.route.Router;\n\n");
     builder.append("public class ").append(className).append(" {\n");
     emitInject(builder);
     builder.append('\n');
@@ -60,9 +61,7 @@ final class InjectRouteInjector {
         .append("();\n");
 
     builder.append("    ")
-        .append(binding.getBundleMethod())
-        .append(RouterProcessor.SUFFIX)
-        .append(".inject(target.")
+        .append("Router.getInstance().inject(target.")
         .append(binding.getName())
         .append(", source);\n");
   }
