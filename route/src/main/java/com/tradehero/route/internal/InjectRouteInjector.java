@@ -16,18 +16,22 @@ final class InjectRouteInjector {
   }
 
   String getFqcn() {
-    return classPackage + "." + className;
+    return Utils.isNullOrEmpty(classPackage) ? className : classPackage + "." + className;
   }
 
   String brewJava() {
     StringBuilder builder = new StringBuilder();
     builder.append("// Generated code by Route. Do not modify!\n");
-    builder.append("package ").append(classPackage).append(";\n\n");
+    if (!Utils.isNullOrEmpty(classPackage)) {
+      builder.append("package ").append(classPackage).append(";\n\n");
+    }
     builder.append("import android.os.Bundle;\n\n");
     builder.append("public class ").append(className).append(" {\n");
     emitInject(builder);
     builder.append('\n');
     builder.append("}\n");
+    
+    Utils.debug(builder.toString());
     return builder.toString();
   }
 
