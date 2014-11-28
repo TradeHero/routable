@@ -50,6 +50,7 @@ public class RoutePropertyGenerationTest {
         .compilesWithoutError().and()
         .generatesSources(generatedSource);
   }
+
   @Test public void basicInjectRouteGeneration() {
     JavaFileObject sourceFile = JavaFileObjects.forSourceString("p.Advanced", Joiner.on("\n").join(
         "package p;",
@@ -69,32 +70,45 @@ public class RoutePropertyGenerationTest {
             "package p;",
             "import android.os.Bundle;",
             "import com.tradehero.route.Router;",
-            "public class Advanced$A$$Routable {",
+            "public final class Advanced$A$$Routable {",
             "  public static void inject(final p.Advanced.A target, Bundle source) {",
+            "    Bundle subBundle = source.getBundle(\"p.Advanced.A\");",
+            "    if (subBundle != null) {",
+            "      inject(target, subBundle);",
+            "    }",
             "    if (target.a == null) target.a = new p.Advanced.SimpleProp();",
-            "    Router.getInstance().inject(target.a, source);", "  }", "}"));
+            "    Router.getInstance().inject(target.a, source);",
+            "  }",
+            "  public static void save(final p.Advanced.A source, Bundle dest, boolean flat) {",
+            "    Bundle toWrite = null;",
+            "    toWrite = flat ? dest : new Bundle();",
+            "    Router.getInstance().saveSingle(toWrite, source.a, flat);",
+            "    if (!flat) dest.putBundle(\"p.Advanced.A\", toWrite);",
+            "  }",
+            "}"));
 
     JavaFileObject generatedSimplePropSource = JavaFileObjects
         .forSourceString("p/Advanced$SimpleProp$$Routable", Joiner.on("\n").join(
             "package p;",
             "import android.os.Bundle;",
+            "import com.tradehero.route.Router;",
             "public final class Advanced$SimpleProp$$Routable {",
-            "public static void inject(final p.Advanced.SimpleProp target, Bundle source) {",
-            "  Bundle subBundle = source.getBundle(\"p.Advanced.SimpleProp\");",
-            "  if (subBundle != null) {",
-            "    inject(target, subBundle);",
+            "  public static void inject(final p.Advanced.SimpleProp target, Bundle source) {",
+            "    Bundle subBundle = source.getBundle(\"p.Advanced.SimpleProp\");",
+            "    if (subBundle != null) {",
+            "      inject(target, subBundle);",
+            "    }",
+            "    if (source.containsKey(\"a\")) {",
+            "      target.a = source.getString(\"a\");",
+            "    }",
             "  }",
-            "  if (source.containsKey(\"a\")) {",
-            "    target.a = source.getString(\"a\");",
-            "  }",
-            "}",
 
-            "public static void save(final p.Advanced.SimpleProp source, Bundle dest, boolean flat) {",
-            "  Bundle toWrite = null;",
-            "  toWrite = flat ? dest : new Bundle();",
-            "  toWrite.putString(\"a\", source.a);",
-            "  if (!flat) dest.putBundle(\"p.Advanced.SimpleProp\", toWrite);",
-            "}",
+            "  public static void save(final p.Advanced.SimpleProp source, Bundle dest, boolean flat) {",
+            "    Bundle toWrite = null;",
+            "    toWrite = flat ? dest : new Bundle();",
+            "    toWrite.putString(\"a\", source.a);",
+            "    if (!flat) dest.putBundle(\"p.Advanced.SimpleProp\", toWrite);",
+            "  }",
             "}"
         ));
 
