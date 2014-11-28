@@ -20,7 +20,6 @@ public class Router {
   protected final Map<String, RouterOptions> routes = new HashMap<String, RouterOptions>();
   protected final Map<String, RouterParams> cachedRoutes = new HashMap<String, RouterParams>();
 
-  private String rootUrl = null;
   private Context context;
 
   /**
@@ -101,22 +100,6 @@ public class Router {
     }
     options.setOpenClass(klass);
     this.routes.put(format, options);
-  }
-
-  /**
-   * Set the root url; used when opening an activity or callback via RouterActivity
-   *
-   * @param rootUrl The URL format to use as the root
-   */
-  public void setRootUrl(String rootUrl) {
-    this.rootUrl = rootUrl;
-  }
-
-  /**
-   * @return The router's root URL, or null.
-   */
-  public String getRootUrl() {
-    return this.rootUrl;
   }
 
   /**
