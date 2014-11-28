@@ -26,6 +26,7 @@ public class RoutePropertyGenerationTest {
     JavaFileObject generatedSource = JavaFileObjects.forSourceString("Basic$A$$Routable",
         Joiner.on("\n").join(
             "import android.os.Bundle;",
+            "import com.tradehero.route.Router;",
             "public final class Basic$A$$Routable {",
             "  public static void inject(final Basic.A target, Bundle source) {",
             "    Bundle subBundle = source.getBundle(\"Basic.A\");",
