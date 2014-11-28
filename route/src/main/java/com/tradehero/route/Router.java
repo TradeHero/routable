@@ -504,28 +504,4 @@ public class Router {
     }
     return this;
   }
-
-  @SuppressWarnings("unchecked")
-  public static final class Parser {
-    // TODO use a map for class mapping in code generation
-    // instead of doing it on runtime like this
-    public static <T> T parse(Object o, Class<T> type) {
-      if (type == String.class) {
-        return (T) o.toString();
-      } else if (type == Integer.class || type == int.class) {
-        return (T) Integer.valueOf(o.toString());
-      } else if (type == Boolean.class || type == boolean.class) {
-        return (T) Boolean.valueOf(o.toString());
-      } else if (type == Short.class || type == short.class) {
-        return (T) Short.valueOf(o.toString());
-      } else if (type == Long.class || type == long.class) {
-        return (T) Long.valueOf(o.toString());
-      } else if (type == Character.class || type == char.class) {
-        return (T) o;
-      } else if (type == Float.class || type == float.class) {
-        return (T) Float.valueOf(o.toString());
-      }
-      throw new RuntimeException("Object type: " + type.toString() + " is not supported");
-    }
-  }
 }
