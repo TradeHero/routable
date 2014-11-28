@@ -264,25 +264,12 @@ public class RouterProcessor extends AbstractProcessor {
     String name = element.getSimpleName().toString();
     String type = elementType.toString();
 
-    RouteInjector injectRouteInjector = getOrCreateTargetClass(targetClassMap, enclosingElement);
+    RouteInjector injectRouteInjector = getOrCreateTargetRoutePropertyClass(targetClassMap, enclosingElement);
     FieldBinding binding = new FieldBinding(name, type);
     injectRouteInjector.addBinding(binding);
 
     // Add the type-erased version to the valid injection targets set.
     erasedTargetNames.add(enclosingElement.toString());
-  }
-
-  private RouteInjector getOrCreateTargetClass(Map<TypeElement, RouteInjector> targetClassMap, TypeElement enclosingElement) {
-    RouteInjector injectRouteInjector = targetClassMap.get(enclosingElement);
-    if (injectRouteInjector == null) {
-      String targetType = enclosingElement.getQualifiedName().toString();
-      String classPackage = getPackageName(enclosingElement);
-      String className = getClassName(enclosingElement, classPackage) + SUFFIX;
-
-      injectRouteInjector = new RouteInjector(classPackage, className, targetType, null);
-      targetClassMap.put(enclosingElement, injectRouteInjector);
-    }
-    return injectRouteInjector;
   }
 
   private static String getClassName(TypeElement type, String packageName) {
