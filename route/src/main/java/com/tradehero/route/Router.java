@@ -55,18 +55,6 @@ public class Router {
     this.context = context.getApplicationContext();
   }
 
-  /**
-   * Map a URL to a callback
-   *
-   * @param format The URL being mapped; for example, "users/:id" or "groups/:id/topics/:topic_id"
-   * @param callback {@link RouterCallback} instance which contains the code to execute when the URL
-   * is opened
-   */
-  public void map(String format, RouterCallback callback) {
-    RouterOptions options = new RouterOptions();
-    options.setCallback(callback);
-    this.map(format, null, options);
-  }
 
   /**
    * Map a URL to open an {@link android.app.Activity}
@@ -95,8 +83,6 @@ public class Router {
   }
 
   /**
-   * Open a map'd URL set using {@link #map(String, Class)} or {@link #map(String, RouterCallback)}
-   *
    * @param url The URL; for example, "users/16" or "groups/5/topics/20"
    */
   public void open(String url) {
@@ -104,24 +90,11 @@ public class Router {
   }
 
   /**
-   * Open a map'd URL set using {@link #map(String, Class)} or {@link #map(String, RouterCallback)}
    *
    * @param url The URL; for example, "users/16" or "groups/5/topics/20"
    * @param context The context which is used in the generated {@link android.content.Intent}
    */
   public void open(String url, Context context) {
-    this.open(url, null, context);
-  }
-
-  /**
-   * Open a map'd URL set using {@link #map(String, Class)} or {@link #map(String, RouterCallback)}
-   *
-   * @param url The URL; for example, "users/16" or "groups/5/topics/20"
-   * @param extras The {@link android.os.Bundle} which contains the extras to be assigned to the
-   * generated {@link android.content.Intent}
-   * @param context The context which is used in the generated {@link android.content.Intent}
-   */
-  public void open(String url, Bundle extras, Context context) {
     if (context == null) {
       throw new RuntimeException("You need to supply a context for Router " + this.toString());
     }
@@ -136,9 +109,6 @@ public class Router {
     if (intent == null) {
       // Means the options weren't opening a new activity
       return;
-    }
-    if (extras != null) {
-      intent.putExtras(extras);
     }
     context.startActivity(intent);
   }
