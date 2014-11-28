@@ -32,6 +32,7 @@ public class MainActivity extends Activity {
         UserBaseKey userBaseKey = new UserBaseKey(10);
         PortfolioId portfolioId = new PortfolioId(20);
         router.save(bundle, userBaseKey, portfolioId, false);
+        bundle.putString("username", "Tho Nguyen");
 
         Intent intent = new Intent(MainActivity.this, UserActivity.class);
         intent.putExtras(bundle);

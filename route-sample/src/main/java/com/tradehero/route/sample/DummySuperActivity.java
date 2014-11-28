@@ -9,5 +9,5 @@ public class DummySuperActivity extends Activity {
   @RouteProperty PortfolioId portfolioId;
   @RouteProperty UserBaseKey userBaseKey;
 
-  @RouteProperty String test;
+  @RouteProperty String username;
 }
