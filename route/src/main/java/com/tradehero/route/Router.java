@@ -20,13 +20,22 @@ public class Router {
   protected final Map<String, RouterOptions> routes = new HashMap<String, RouterOptions>();
   protected final Map<String, RouterParams> cachedRoutes = new HashMap<String, RouterParams>();
 
-  private String rootUrl = null;
   private Context context;
 
   /**
    * Creates a new Router
    */
   public Router() {
+  }
+
+  private static final Router router = new Router();
+
+  /**
+   * A globally accessible Router instance that will work for
+   * most use cases.
+   */
+  public static Router getInstance() {
+    return router;
   }
 
   /**
@@ -91,22 +100,6 @@ public class Router {
     }
     options.setOpenClass(klass);
     this.routes.put(format, options);
-  }
-
-  /**
-   * Set the root url; used when opening an activity or callback via RouterActivity
-   *
-   * @param rootUrl The URL format to use as the root
-   */
-  public void setRootUrl(String rootUrl) {
-    this.rootUrl = rootUrl;
-  }
-
-  /**
-   * @return The router's root URL, or null.
-   */
-  public String getRootUrl() {
-    return this.rootUrl;
   }
 
   /**
@@ -330,8 +323,7 @@ public class Router {
    * @return A map of URL parameters if it's a match (i.e. {"id" => "42"}) or null if there is no
    * match
    */
-  private Map<String, String> urlToParamsMap(String[] givenUrlSegments,
-      String[] routerUrlSegments) {
+  private Map<String, String> urlToParamsMap(String[] givenUrlSegments, String[] routerUrlSegments) {
     Map<String, String> formatParams = new HashMap<String, String>();
     for (int index = 0; index < routerUrlSegments.length; index++) {
       String routerPart = routerUrlSegments[index];
@@ -431,10 +423,6 @@ public class Router {
     }
   }
 
-  public void reset(Object target) {
-    // TODO
-  }
-
   private static Method findInjectorForClass(Class<?> cls) throws NoSuchMethodException {
     Method inject = INJECTORS.get(cls);
     if (inject != null) {
@@ -481,14 +469,6 @@ public class Router {
     return inject;
   }
 
-  public static Router with(Context context) {
-    return new Router(context);
-  }
-
-  public static Router with(Context context, Class<?>... targets) {
-    return with(context).registerRoutes(targets);
-  }
-
   public Router registerRoutes(Class<?>... targets) {
     for (Class<?> target: targets) {
       if (Activity.class.isAssignableFrom(target) && target.isAnnotationPresent(Routable.class)) {
@@ -506,47 +486,5 @@ public class Router {
       }
     }
     return this;
-  }
-
-  @SuppressWarnings("unchecked")
-  public static final class Parser {
-    // TODO use a map for class mapping in code generation
-    // instead of doing it on runtime like this
-    public static <T> T parse(Object o, Class<T> type) {
-      if (type == String.class) {
-        return (T) o.toString();
-      } else if (type == Integer.class || type == int.class) {
-        return (T) Integer.valueOf(o.toString());
-      } else if (type == Boolean.class || type == boolean.class) {
-        return (T) Boolean.valueOf(o.toString());
-      } else if (type == Short.class || type == short.class) {
-        return (T) Short.valueOf(o.toString());
-      } else if (type == Long.class || type == long.class) {
-        return (T) Long.valueOf(o.toString());
-      } else if (type == Character.class || type == char.class) {
-        return (T) o;
-      } else if (type == Float.class || type == float.class) {
-        return (T) Float.valueOf(o.toString());
-      }
-      throw new RuntimeException("Object type: " + type.toString() + " is not supported");
-    }
-
-    public static <T> void put(Bundle dest, String key, T o, Class<T> type) {
-      if (type == String.class) {
-        dest.putString(key, (String) o);
-      } else if (type == Integer.class || type == int.class) {
-        dest.putInt(key, (Integer) o);
-      } else if (type == Boolean.class || type == boolean.class) {
-        dest.putBoolean(key, (Boolean) o);
-      } else if (type == Short.class || type == short.class) {
-        dest.putShort(key, (Short) o);
-      } else if (type == Long.class || type == long.class) {
-        dest.putLong(key, (Long) o);
-      } else if (type == Character.class || type == char.class) {
-        dest.putChar(key, (Character) o);
-      } else if (type == Float.class || type == float.class) {
-        dest.putFloat(key, (Float) o);
-      }
-    }
   }
 }

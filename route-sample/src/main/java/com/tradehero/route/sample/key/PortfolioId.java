@@ -6,7 +6,6 @@ public class PortfolioId {
   @RouteProperty int portfolioId;
 
   public PortfolioId() {
-
   }
 
   public PortfolioId(int portfolioId) {

@@ -2,15 +2,15 @@ package com.tradehero.route.internal;
 
 class FieldBinding {
   private String name;
-  private String type;
+  private String bundleMethod;
 
-  public FieldBinding(String name, String type) {
+  public FieldBinding(String name, String bundleMethod) {
     this.name = name;
-    this.type = type;
+    this.bundleMethod = bundleMethod;
   }
 
-  public String getType() {
-    return type;
+  public String getBundleMethod() {
+    return bundleMethod;
   }
 
   public String getName() {
