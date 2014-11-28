@@ -51,11 +51,16 @@ final class RouteInjector {
         .append(" source, Bundle dest, boolean flat) {\n");
 
     builder.append("    ")
-        .append("Bundle toWrite = null;\n");
+        .append("Bundle toWrite = null;\n")
+        .append("    ")
+        .append("toWrite = flat ? dest : new Bundle();\n");
 
     for (FieldBinding binding: fieldBinding) {
-      if (binding instanceof RoutePropertyBinding)
-      emitSaveBinding(builder, (RoutePropertyBinding) binding);
+      if (binding instanceof RoutePropertyBinding) {
+        emitSaveBinding(builder, (RoutePropertyBinding) binding);
+      } else {
+        emitRedirectSaveBinding(builder, binding);
+      }
     }
 
     builder.append("\n    ")
@@ -63,7 +68,7 @@ final class RouteInjector {
         .append(bundleKey)
         .append("\", toWrite);\n");
     builder.append("  ")
-        .append("}\n");
+        .append("}");
   }
 
   private void emitInject(StringBuilder builder) {
@@ -149,9 +154,6 @@ final class RouteInjector {
     if (binding.isMethod() && !binding.getName().startsWith("get")) {
       return;
     }
-
-    builder.append("    ")
-        .append("toWrite = flat ? dest : new Bundle();\n");
     builder.append("    ")
         .append("toWrite.put")
         .append(binding.getBundleMethod())
@@ -161,6 +163,14 @@ final class RouteInjector {
         .append(binding.getName())
         .append(binding.isMethod() ? "()" : "")
         .append(")")
+        .append(";\n");
+  }
+
+  private void emitRedirectSaveBinding(StringBuilder builder, FieldBinding binding) {
+    builder.append("    ")
+        .append("Router.getInstance().saveSingle(toWrite, source.")
+        .append(binding.getName())
+        .append(", flat)")
         .append(";\n");
   }
 
