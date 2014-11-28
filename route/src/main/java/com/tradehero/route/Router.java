@@ -3,7 +3,6 @@ package com.tradehero.route;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import com.tradehero.route.internal.RouterProcessor;
@@ -57,13 +56,6 @@ public class Router {
   }
 
   /**
-   * @return The context for the router
-   */
-  public Context getContext() {
-    return this.context;
-  }
-
-  /**
    * Map a URL to a callback
    *
    * @param format The URL being mapped; for example, "users/:id" or "groups/:id/topics/:topic_id"
@@ -103,77 +95,12 @@ public class Router {
   }
 
   /**
-   * Open a URL using the operating system's configuration (such as opening a link to Chrome or a
-   * video to YouTube)
-   *
-   * @param url The URL; for example, "http://www.youtube.com/watch?v=oHg5SJYRHA0"
-   */
-  public void openExternal(String url) {
-    this.openExternal(url, this.context);
-  }
-
-  /**
-   * Open a URL using the operating system's configuration (such as opening a link to Chrome or a
-   * video to YouTube)
-   *
-   * @param url The URL; for example, "http://www.youtube.com/watch?v=oHg5SJYRHA0"
-   * @param context The context which is used in the generated {@link android.content.Intent}
-   */
-  public void openExternal(String url, Context context) {
-    this.openExternal(url, null, context);
-  }
-
-  /**
-   * Open a URL using the operating system's configuration (such as opening a link to Chrome or a
-   * video to YouTube)
-   *
-   * @param url The URL; for example, "http://www.youtube.com/watch?v=oHg5SJYRHA0"
-   * @param extras The {@link android.os.Bundle} which contains the extras to be assigned to the
-   * generated {@link android.content.Intent}
-   */
-  public void openExternal(String url, Bundle extras) {
-    this.openExternal(url, extras, this.context);
-  }
-
-  /**
-   * Open a URL using the operating system's configuration (such as opening a link to Chrome or a
-   * video to YouTube)
-   *
-   * @param url The URL; for example, "http://www.youtube.com/watch?v=oHg5SJYRHA0"
-   * @param extras The {@link android.os.Bundle} which contains the extras to be assigned to the
-   * generated {@link android.content.Intent}
-   * @param context The context which is used in the generated {@link android.content.Intent}
-   */
-  public void openExternal(String url, Bundle extras, Context context) {
-    if (context == null) {
-      throw new RuntimeException("You need to supply a context for Router " + this.toString());
-    }
-    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-    this.addFlagsToIntent(intent, context);
-    if (extras != null) {
-      intent.putExtras(extras);
-    }
-    context.startActivity(intent);
-  }
-
-  /**
    * Open a map'd URL set using {@link #map(String, Class)} or {@link #map(String, RouterCallback)}
    *
    * @param url The URL; for example, "users/16" or "groups/5/topics/20"
    */
   public void open(String url) {
     this.open(url, this.context);
-  }
-
-  /**
-   * Open a map'd URL set using {@link #map(String, Class)} or {@link #map(String, RouterCallback)}
-   *
-   * @param url The URL; for example, "users/16" or "groups/5/topics/20"
-   * @param extras The {@link android.os.Bundle} which contains the extras to be assigned to the
-   * generated {@link android.content.Intent}
-   */
-  public void open(String url, Bundle extras) {
-    this.open(url, extras, this.context);
   }
 
   /**
