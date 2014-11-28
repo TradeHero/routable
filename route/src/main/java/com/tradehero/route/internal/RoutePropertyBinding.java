@@ -1,6 +1,6 @@
 package com.tradehero.route.internal;
 
-public class RoutePropertyBinding extends FieldBinding {
+final class RoutePropertyBinding extends FieldBinding {
   private final boolean isMethod;
   private final String bundleKey;
 

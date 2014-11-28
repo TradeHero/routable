@@ -10,7 +10,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
-class TypeToBundleMethodMap {
+final class TypeToBundleMethodMap {
 
   private final Map<TypeMirror, String> conversionMap = new LinkedHashMap<TypeMirror, String>();
 
