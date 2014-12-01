@@ -14,10 +14,12 @@ Given a class (annotated with @Routable), how to get list of child fields annota
 ![image](https://cloud.githubusercontent.com/assets/1457567/5244782/b71b7214-798d-11e4-85df-5c746572dc04.png)
         
 ClassNode
+
     - class element
     - routeInjector
     - generatedRoutes or PATH_PATTERNS <----- routeBinding
 
-routeInjector ---->
+routeInjector
+
     --- field Binding ---> child ClassNodes (RouteProperty)
     --- annotated Routable super class ---> child ClassNodes (Routable)
