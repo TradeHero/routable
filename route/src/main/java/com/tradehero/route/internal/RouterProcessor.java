@@ -151,19 +151,18 @@ public class RouterProcessor extends AbstractProcessor {
     // Add current class to list of class for code generation
     injectableTargetClasses.add(enclosingElement.toString());
     RouteInjector routeInjector = getOrCreateTargetRoutePropertyClass(targetClassMap, enclosingElement);
+    String name = element.getSimpleName().toString();
     if (bundleMethod == null) {
       message(NOTE, element, (isMethod ? "Method" : "Field") + " %s type is not bundle-able, "
               + "indirect injection will be taking place!",
           element.getSimpleName());
-      FieldBinding binding = new FieldBinding(element.getSimpleName().toString(), elementType.toString());
+      FieldBinding binding = new FieldBinding(name, elementType.toString());
       routeInjector.addBinding(binding);
     } else {
       String bundleKey = element.getAnnotation(RouteProperty.class).value();
-      String name = element.getSimpleName().toString();
       if (isMethod && Utils.isNullOrEmpty(bundleKey)) {
         bundleKey = nameFromMutator(name);
       }
-
       RoutePropertyBinding binding = new RoutePropertyBinding(name, bundleMethod, bundleKey, isMethod);
       routeInjector.addBinding(binding);
     }
