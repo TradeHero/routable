@@ -140,10 +140,12 @@ public class RouterProcessor extends AbstractProcessor {
       return;
     }
 
+    // Verify annotated element to be a method or a field with bundle-able type
     boolean isMethod = element.getKind() == METHOD;
     if (!isMethod && typeToBundleMethodMap.convert(elementType) == null) {
       return;
     }
+
     // Assemble information on the injection point.
     String bundleMethod = getBundleMethod(element, elementType);
 
@@ -200,6 +202,7 @@ public class RouterProcessor extends AbstractProcessor {
     } else {
       return typeToBundleMethodMap.convert(elementType);
     }
+
     return null;
   }
 
