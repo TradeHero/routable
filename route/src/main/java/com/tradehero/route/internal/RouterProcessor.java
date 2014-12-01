@@ -160,19 +160,25 @@ public class RouterProcessor extends AbstractProcessor {
     } else {
       String bundleKey = element.getAnnotation(RouteProperty.class).value();
       String name = element.getSimpleName().toString();
-      if (isMethod && (bundleKey == null || bundleKey.length() == 0)) {
-        // extract getter name from getter method, example: getNumber ---> number
-        for (int i = 0; i < name.length(); ++i) {
-          if (Character.isUpperCase(name.charAt(i))) {
-            bundleKey = Character.toLowerCase(name.charAt(i)) + name.substring(i + 1);
-            break;
-          }
-        }
+      if (isMethod && Utils.isNullOrEmpty(bundleKey)) {
+        bundleKey = nameFromMutator(name);
       }
 
       RoutePropertyBinding binding = new RoutePropertyBinding(name, bundleMethod, bundleKey, isMethod);
       routeInjector.addBinding(binding);
     }
+  }
+
+  // extract name from setter/getter method, example: getNumber ---> number
+  private String nameFromMutator(String name) {
+    String resultName = name;
+    for (int i = 0; i < name.length(); ++i) {
+      if (Character.isUpperCase(name.charAt(i))) {
+        resultName = Character.toLowerCase(name.charAt(i)) + name.substring(i + 1);
+        break;
+      }
+    }
+    return resultName;
   }
 
   /**
