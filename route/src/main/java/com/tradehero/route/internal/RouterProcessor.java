@@ -2,8 +2,6 @@ package com.tradehero.route.internal;
 
 import com.tradehero.route.RouteProperty;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.util.LinkedHashMap;
@@ -29,6 +27,7 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.JavaFileObject;
 
+import static com.tradehero.route.internal.Utils.stackTraceToString;
 import static javax.lang.model.element.ElementKind.CLASS;
 import static javax.lang.model.element.ElementKind.METHOD;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -85,12 +84,10 @@ public class RouterProcessor extends AbstractProcessor {
       try {
         if (element.getKind() != CLASS) {
           parseRouteProperty(element, targetClassMap, injectableTargetClasses);
+          parseInjectRoute(element, targetClassMap, injectableTargetClasses);
         }
       } catch (Exception e) {
-        StringWriter stackTrace = new StringWriter();
-        e.printStackTrace(new PrintWriter(stackTrace));
-
-        error(element, "Unable to generate injector for @RouteProperty.\n\n%s", stackTrace);
+        error(element, "Unable to generate injector for @RouteProperty\n%s", stackTraceToString(e));
       }
     }
 
@@ -99,20 +96,6 @@ public class RouterProcessor extends AbstractProcessor {
       String parentClassFqcn = findParentFqcn(entry.getKey(), injectableTargetClasses);
       if (parentClassFqcn != null) {
         entry.getValue().setParentInjector(parentClassFqcn + SUFFIX);
-      }
-    }
-
-    // Process each @RouteProperty element.
-    for (Element element : env.getElementsAnnotatedWith(RouteProperty.class)) {
-      try {
-        if (element.getKind() != CLASS) {
-          parseInjectRoute(element, targetClassMap, injectableTargetClasses);
-        }
-      } catch (Exception e) {
-        StringWriter stackTrace = new StringWriter();
-        e.printStackTrace(new PrintWriter(stackTrace));
-
-        error(element, "Unable to generate injector for @RouteProperty.\n\n%s", stackTrace);
       }
     }
 
