@@ -1,5 +1,6 @@
 package com.tradehero.route.internal;
 
+import com.tradehero.route.Routable;
 import com.tradehero.route.RouteProperty;
 import java.io.IOException;
 import java.io.Writer;
@@ -70,7 +71,7 @@ public class RouterProcessor extends AbstractProcessor {
   @Override public Set<String> getSupportedAnnotationTypes() {
     Set<String> supportTypes = new LinkedHashSet<String>();
     supportTypes.add(RouteProperty.class.getCanonicalName());
-
+    supportTypes.add(Routable.class.getCanonicalName());
     return supportTypes;
   }
 
@@ -87,6 +88,17 @@ public class RouterProcessor extends AbstractProcessor {
       try {
         if (element.getKind() != CLASS) {
           parseRouteProperty(element, targetClassMap, injectableTargetClasses);
+        }
+      } catch (Exception e) {
+        error(element, "Unable to generate injector for @RouteProperty\n%s", stackTraceToString(e));
+      }
+    }
+
+    // Process each @RouteProperty element.
+    for (Element element : env.getElementsAnnotatedWith(Routable.class)) {
+      try {
+        if (element.getKind() == CLASS) {
+          parseRoutable(element, targetClassMap, injectableTargetClasses);
         }
       } catch (Exception e) {
         error(element, "Unable to generate injector for @RouteProperty\n%s", stackTraceToString(e));
@@ -138,7 +150,7 @@ public class RouterProcessor extends AbstractProcessor {
     }
 
     // Verify common generated code restrictions.
-    if (isValidForGeneratedCode(RouteProperty.class, "fields", element)) {
+    if (isInaccessibleViaGeneratedCode(RouteProperty.class, "fields", element)) {
       return;
     }
 
@@ -157,15 +169,31 @@ public class RouterProcessor extends AbstractProcessor {
               + "indirect injection will be taking place!",
           element.getSimpleName());
       FieldBinding binding = new FieldBinding(name, elementType.toString());
-      routeInjector.addBinding(binding);
+      routeInjector.addFieldBinding(binding);
     } else {
       String bundleKey = element.getAnnotation(RouteProperty.class).value();
       if (isMethod && Utils.isNullOrEmpty(bundleKey)) {
         bundleKey = nameFromMutator(name);
       }
       RoutePropertyBinding binding = new RoutePropertyBinding(name, bundleMethod, bundleKey, isMethod);
-      routeInjector.addBinding(binding);
+      routeInjector.addFieldBinding(binding);
     }
+  }
+
+  private void parseRoutable(Element element, Map<TypeElement, RouteInjector> targetClassMap,
+      Set<String> injectableTargetClasses) {
+    TypeElement classElement = (TypeElement) element;
+
+    // Verify common generated code restrictions.
+    if (isRoutableIncorrectlyAnnotated(Routable.class, element)) {
+      return;
+    }
+
+    String[] routes = element.getAnnotation(Routable.class).value();
+    // Verify common generated code restrictions.
+    RouteInjector routeInjector = getOrCreateTargetRoutePropertyClass(targetClassMap, classElement);
+    routeInjector.addRoutableBinding(RoutableBinding.parse(routes));
+    injectableTargetClasses.add(classElement.toString());
   }
 
   /** extract name from setter/getter method, example: getNumber ---> number */
@@ -257,7 +285,7 @@ public class RouterProcessor extends AbstractProcessor {
   }
 
   /** Make sure that @RouteProperty annotated element is valid for code generation */
-  private boolean isValidForGeneratedCode(Class<? extends Annotation> annotationClass,
+  private boolean isInaccessibleViaGeneratedCode(Class<? extends Annotation> annotationClass,
       String targetThing, Element element) {
     boolean hasError = false;
     TypeElement enclosingElement = (TypeElement) element.getEnclosingElement();
@@ -284,6 +312,25 @@ public class RouterProcessor extends AbstractProcessor {
       error(enclosingElement, "@%s %s may not be contained in private classes. (%s.%s)",
           annotationClass.getSimpleName(), targetThing, enclosingElement.getQualifiedName(),
           element.getSimpleName());
+      hasError = true;
+    }
+
+    return hasError;
+  }
+
+  private boolean isRoutableIncorrectlyAnnotated(Class<? extends Annotation> annotationClass, Element element) {
+    boolean hasError = false;
+    // Verify containing type.
+    if (element.getKind() != CLASS) {
+      error(element, "@%s %s has to be a class.",
+          annotationClass.getSimpleName(), element.getSimpleName());
+      hasError = true;
+    }
+
+    // Verify containing class visibility is not private.
+    if (element.getModifiers().contains(PRIVATE)) {
+      error(element, "@%s %s may not be a private class.",
+          annotationClass.getSimpleName(), element.getSimpleName());
       hasError = true;
     }
 

@@ -9,6 +9,7 @@ final class RouteInjector {
   private final String bundleKey;
   private final String className;
   private final Set<FieldBinding> fieldBinding = new LinkedHashSet<FieldBinding>();
+  private final Set<RoutableBinding> routableBinding = new LinkedHashSet<RoutableBinding>();
   private String parentInjector;
 
   RouteInjector(String classPackage, String className, String targetClass, String bundleKey) {
@@ -29,19 +30,41 @@ final class RouteInjector {
       builder.append("package ").append(classPackage).append(";\n\n");
     }
     builder.append("import android.os.Bundle;\n");
-    builder.append("import com.tradehero.route.Router;\n\n");
-    builder.append("public final class ").append(className).append(" {\n");
+    builder.append("import com.tradehero.route.Router;\n");
 
-    emitInject(builder);
-    builder.append("\n\n");
-
-    emitSaver(builder);
+    if (routableBinding.size() > 0) {
+      builder.append("import com.tradehero.route.DynamicPart;\n");
+      builder.append("import com.tradehero.route.PathPattern;\n");
+      builder.append("import com.tradehero.route.StaticPart;\n");
+    }
     builder.append("\n");
+
+    // class content
+    builder.append("public final class ").append(className).append(" {\n");
+    if (routableBinding.size() > 0) {
+      emitRoutes(builder);
+      builder.append("\n\n");
+    }
+
+    if (fieldBinding.size() > 0) {
+      emitInject(builder);
+      builder.append("\n\n");
+
+      emitSaver(builder);
+      builder.append("\n");
+    }
 
     builder.append("}\n");
 
     Utils.debug(builder.toString());
     return builder.toString();
+  }
+
+  private void emitRoutes(StringBuilder builder) {
+    builder.append("  ")
+        .append("public static PathPattern[] PATH_PATTERNS = {\n")
+        .append("  ")
+        .append("};");
   }
 
   private void emitSaver(StringBuilder builder) {
@@ -174,8 +197,11 @@ final class RouteInjector {
         .append(";\n");
   }
 
-  public void addBinding(FieldBinding binding) {
+  public void addFieldBinding(FieldBinding binding) {
     fieldBinding.add(binding);
+  }
+  public void addRoutableBinding(RoutableBinding binding) {
+    routableBinding.add(binding);
   }
 
   public void setParentInjector(String parentInjector) {
