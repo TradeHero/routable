@@ -32,7 +32,10 @@ import static javax.lang.model.element.ElementKind.CLASS;
 import static javax.lang.model.element.ElementKind.METHOD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
+import static javax.tools.Diagnostic.Kind;
 import static javax.tools.Diagnostic.Kind.ERROR;
+import static javax.tools.Diagnostic.Kind.NOTE;
+import static javax.tools.Diagnostic.Kind.WARNING;
 
 public class RouterProcessor extends AbstractProcessor {
   public static final String SUFFIX = "$$Routable";
@@ -84,7 +87,6 @@ public class RouterProcessor extends AbstractProcessor {
       try {
         if (element.getKind() != CLASS) {
           parseRouteProperty(element, targetClassMap, injectableTargetClasses);
-          parseInjectRoute(element, targetClassMap, injectableTargetClasses);
         }
       } catch (Exception e) {
         error(element, "Unable to generate injector for @RouteProperty\n%s", stackTraceToString(e));
@@ -142,68 +144,78 @@ public class RouterProcessor extends AbstractProcessor {
 
     // Verify annotated element to be a method or a field with bundle-able type
     boolean isMethod = element.getKind() == METHOD;
-    if (!isMethod && typeToBundleMethodMap.convert(elementType) == null) {
-      return;
-    }
+    String bundleMethod = typeToBundleMethodMap.convert(isMethod ? getMethodBundleType(element) :
+        elementType);
 
-    // Assemble information on the injection point.
-    String bundleMethod = getBundleMethod(element, elementType);
-
-    String bundleKey = element.getAnnotation(RouteProperty.class).value();
-    String name = element.getSimpleName().toString();
-    if (isMethod) {
-      if (bundleKey == null || bundleKey.length() == 0) {
+    // Verification completed, generation process started
+    // Add current class to list of class for code generation
+    injectableTargetClasses.add(enclosingElement.toString());
+    RouteInjector routeInjector = getOrCreateTargetRoutePropertyClass(targetClassMap, enclosingElement);
+    if (bundleMethod == null) {
+      message(NOTE, element, (isMethod ? "Method" : "Field") + " %s type is not bundle-able, "
+              + "indirect injection will be taking place!",
+          element.getSimpleName());
+      FieldBinding binding = new FieldBinding(element.getSimpleName().toString(), elementType.toString());
+      routeInjector.addBinding(binding);
+    } else {
+      String bundleKey = element.getAnnotation(RouteProperty.class).value();
+      String name = element.getSimpleName().toString();
+      if (isMethod && (bundleKey == null || bundleKey.length() == 0)) {
         // extract getter name from getter method, example: getNumber ---> number
         for (int i = 0; i < name.length(); ++i) {
-          if (name.charAt(i) >= 'A' && name.charAt(i) <= 'Z') {
+          if (Character.isUpperCase(name.charAt(i))) {
             bundleKey = Character.toLowerCase(name.charAt(i)) + name.substring(i + 1);
             break;
           }
         }
       }
+
+      RoutePropertyBinding binding = new RoutePropertyBinding(name, bundleMethod, bundleKey, isMethod);
+      routeInjector.addBinding(binding);
     }
-
-    RouteInjector routeInjector =
-        getOrCreateTargetRoutePropertyClass(targetClassMap, enclosingElement);
-    RoutePropertyBinding binding = new RoutePropertyBinding(name, bundleMethod, bundleKey, isMethod);
-    routeInjector.addBinding(binding);
-
-    injectableTargetClasses.add(enclosingElement.toString());
   }
 
-  private String getBundleMethod(Element element, TypeMirror elementType) {
-    boolean isMethod = element.getKind() == METHOD;
-    String name = element.getSimpleName().toString();
-    if (isMethod) {
-      // check this method is set method and for which property
-      ExecutableElement executableElement = (ExecutableElement) element;
-      List<? extends VariableElement> methodParameters = executableElement.getParameters();
-      if (name.startsWith("set")) {
-        if (methodParameters.size() != 1) {
-          throw new IllegalStateException(String.format(
-              "Setter method %s that annotated with @RouteProperty "
-                  + "can have exactly one parameter", executableElement.getSimpleName()
-          ));
-        }
-
-        VariableElement val = methodParameters.get(0);
-        return typeToBundleMethodMap.convert(val.asType());
-      }
-
-      if (name.startsWith("get") || name.startsWith("is") || name.startsWith("has")) {
-        if (methodParameters.size() != 0) {
-          throw new IllegalStateException(String.format(
-              "Getter method %s that annotated with @RouteProperty can not have any parameter",
-              executableElement.getSimpleName()));
-        }
-
-        return typeToBundleMethodMap.convert(executableElement.getReturnType());
-      }
-    } else {
-      return typeToBundleMethodMap.convert(elementType);
+  /**
+   * Get the bundle-able type of setter/getter method. For example:
+   *  - Integer getId() will return Int, corresponding to {@link android.os.Bundle#putInt(String, int)}
+   *  - void setName(String name) will return String, corresponding to{@link android.os.Bundle#getString(String)}
+   *
+   * @param element method element
+   * @return Injection bundle type
+   */
+  private TypeMirror getMethodBundleType(Element element) {
+    if (element.getKind() != METHOD) {
+      throw new IllegalAccessError("Method is designed to call on a method element!");
     }
 
-    return null;
+    String name = element.getSimpleName().toString();
+    ExecutableElement executableElement = (ExecutableElement) element;
+    List<? extends VariableElement> methodParameters = executableElement.getParameters();
+
+    int parametersSize = methodParameters.size();
+    // setter: bundle type is the type of the argument
+    if (parametersSize == 1) {
+      if (!verifySetterConvention(name)) {
+        message(WARNING, element, "Route property setter [%s] should started with \"set\"", name);
+      }
+      VariableElement val = methodParameters.get(0);
+      return val.asType();
+    }
+
+    // getter: bundle type is the method return type
+    if (parametersSize == 0) {
+      if (!verifyGetterConvention(name)) {
+        message(WARNING, element, "Route property getter [%s] should started with either "
+                + "\"get\", \"is\" or \"has\"", name);
+      }
+      return executableElement.getReturnType();
+    }
+
+    throw new IllegalStateException(String.format(
+        "Method that annotated with @RouteProperty [%s] can only be a setter or getter, "
+            + "which have no more than 1 argument",
+        executableElement.getSimpleName()
+    ));
   }
 
   private RouteInjector getOrCreateTargetRoutePropertyClass(
@@ -224,38 +236,6 @@ public class RouterProcessor extends AbstractProcessor {
       targetClassMap.put(enclosingElement, routeInjector);
     }
     return routeInjector;
-  }
-
-  private void parseInjectRoute(Element element, Map<TypeElement, RouteInjector> targetClassMap,
-      Set<String> erasedTargetNames) {
-    TypeElement enclosingElement = (TypeElement) element.getEnclosingElement();
-
-    // Verify that the target type extends from Serializable.
-    TypeMirror elementType = element.asType();
-    if (elementType instanceof TypeVariable) {
-      TypeVariable typeVariable = (TypeVariable) elementType;
-      elementType = typeVariable.getUpperBound();
-    }
-
-    // Verify common generated code restrictions.
-    if (isValidForGeneratedCode(RouteProperty.class, "fields", element)) {
-      return;
-    }
-
-    if (element.getKind() == METHOD || typeToBundleMethodMap.convert(elementType) != null) {
-      return;
-    }
-
-    // Assemble information on the injection point.
-    String name = element.getSimpleName().toString();
-    String type = elementType.toString();
-
-    RouteInjector injectRouteInjector = getOrCreateTargetRoutePropertyClass(targetClassMap, enclosingElement);
-    FieldBinding binding = new FieldBinding(name, type);
-    injectRouteInjector.addBinding(binding);
-
-    // Add the type-erased version to the valid injection targets set.
-    erasedTargetNames.add(enclosingElement.toString());
   }
 
   private static String getClassName(TypeElement type, String packageName) {
@@ -301,10 +281,24 @@ public class RouterProcessor extends AbstractProcessor {
   }
 
   private void error(Element element, String message, Object... args) {
+    message(ERROR, element, message, args);
+  }
+
+  private void message(Kind kind, Element element, String message, Object... args) {
     if (args.length > 0) {
       message = String.format(message, args);
     }
-    processingEnv.getMessager().printMessage(ERROR, message, element);
+    processingEnv.getMessager().printMessage(kind, message, element);
+  }
+
+  private boolean verifyGetterConvention(String name) {
+    assert name != null;
+    return name.startsWith("get") || name.startsWith("is") || name.startsWith("has");
+  }
+
+  private boolean verifySetterConvention(String name) {
+    assert name != null;
+    return name.startsWith("set");
   }
 
   private Elements elementUtils() {

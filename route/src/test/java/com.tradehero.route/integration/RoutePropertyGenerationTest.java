@@ -18,7 +18,9 @@ public class RoutePropertyGenerationTest {
         "import com.tradehero.route.RouteProperty;",
         "class Basic {",
         "  static class A {",
+        "    Integer key;",
         "    @RouteProperty String a;",
+        "    @RouteProperty void setB(Integer key) { this.key = key; } ",
         "  }",
         "}"
     ));
@@ -36,6 +38,9 @@ public class RoutePropertyGenerationTest {
             "    ",
             "    if (source.containsKey(\"a\")) {",
             "      target.a = source.getString(\"a\");",
+            "    }",
+            "    if (source.containsKey(\"b\")) {",
+            "      target.setB(source.getInt(\"b\"));",
             "    }",
             "  }",
             "  public static void save(final Basic.A source, Bundle dest, boolean flat) {",
