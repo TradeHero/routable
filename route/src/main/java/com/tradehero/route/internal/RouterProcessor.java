@@ -169,7 +169,7 @@ public class RouterProcessor extends AbstractProcessor {
     }
   }
 
-  // extract name from setter/getter method, example: getNumber ---> number
+  /** extract name from setter/getter method, example: getNumber ---> number */
   private String nameFromMutator(String name) {
     String resultName = name;
     for (int i = 0; i < name.length(); ++i) {
@@ -244,6 +244,10 @@ public class RouterProcessor extends AbstractProcessor {
     return routeInjector;
   }
 
+  /**
+   * Get relative class name to a package, for instance {@link android.view.View.OnClickListener}
+   * will have name View$OnClickListener relatively to package {@link android.view.View}
+  */
   private static String getClassName(TypeElement type, String packageName) {
     int packageLen = packageName.length() == 0 ? 0 : packageName.length() + 1;
     return type.getQualifiedName().toString().substring(packageLen).replace('.', '$');
@@ -253,6 +257,7 @@ public class RouterProcessor extends AbstractProcessor {
     return elementUtils().getPackageOf(type).getQualifiedName().toString();
   }
 
+  /** Make sure that @RouteProperty annotated element is valid for code generation */
   private boolean isValidForGeneratedCode(Class<? extends Annotation> annotationClass,
       String targetThing, Element element) {
     boolean hasError = false;
