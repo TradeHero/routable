@@ -1,29 +1,29 @@
 package com.tradehero.route.internal;
 
 import com.tradehero.route.PathPattern;
-import java.util.regex.Pattern;
+import java.util.Map;
+import javax.lang.model.element.TypeElement;
 
 class RoutableBinding {
-  private static final String PARAM = "[a-zA-Z][a-zA-Z0-9_-]*";
-  private static final Pattern PARAM_NAME_REGEX = Pattern.compile(PARAM);
-  private static final Pattern PARAM_URL_REGEX = Pattern.compile("\\{(" + PARAM + ")\\}");
-
   final PathPattern[] pathPatterns;
 
   private RoutableBinding(PathPattern[] pathPatterns) {
     this.pathPatterns = pathPatterns;
   }
 
-  public static RoutableBinding parse(String[] routes) {
+  /**
+   * Parse routes from String form to PathPattern.
+   * @param routes routes in String form
+   * @param typeMap map between variable name and type
+   * @return RoutableBinding
+   */
+  public static RoutableBinding parse(String[] routes, Map<String, TypeElement> typeMap) {
     PathPattern[] paths = new PathPattern[routes.length];
     for (int i = 0; i < routes.length; ++i) {
-      paths[i] = parseRoute(routes[i]);
+      paths[i] = PathPattern.builder(routes[i])
+          .typeMap(typeMap)
+          .build();
     }
     return new RoutableBinding(paths);
-  }
-
-  private static PathPattern parseRoute(String route) {
-    // FIXME compile route to PathPattern
-    return null;
   }
 }

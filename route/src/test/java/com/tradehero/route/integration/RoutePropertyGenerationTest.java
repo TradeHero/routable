@@ -53,7 +53,9 @@ public class RoutePropertyGenerationTest {
             "  }",
             "}"));
 
-    assert_().about(javaSource()).that(sourceFile).processedWith(new RouterProcessor())
+    assert_().about(javaSource())
+        .that(sourceFile)
+        .processedWith(new RouterProcessor())
         .compilesWithoutError().and()
         .generatesSources(generatedSource);
   }

@@ -20,7 +20,7 @@ public class RoutableGenerationTest {
     JavaFileObject sourceFile = JavaFileObjects.forSourceString("Basic", Joiner.on("\n").join(
         "import com.tradehero.route.Routable;",
         "class Basic {",
-        "  @Routable(\"api/:a\")",
+        "  @Routable(\"/api/:a\")",
         "  static class A {",
         "    Integer key;",
         "  }",
@@ -41,7 +41,9 @@ public class RoutableGenerationTest {
             "  };",
             "}"));
 
-    ASSERT.about(javaSource()).that(sourceFile).processedWith(new RouterProcessor())
+    ASSERT.about(javaSource())
+        .that(sourceFile)
+        .processedWith(new RouterProcessor())
         .compilesWithoutError()
         .and()
         .generatesSources(generatedSource);
@@ -53,18 +55,18 @@ public class RoutableGenerationTest {
         "import com.tradehero.route.Routable;",
         "import com.tradehero.route.RouteProperty;",
         "class Basic {",
-        "  @Routable(\"api/:a\")",
+        "  @Routable(\"/api/{a}\")",
         "  static class A extends B {",
         "    Integer key;",
         "  }",
         "  static class B extends C {",
         "    Integer keyB;",
         "  }",
-        "  @Routable(\"api2/:c\")",
+        "  @Routable(\"/api2/{c}\")",
         "  static class C {",
         "    @RouteProperty Integer keyC;",
         "  }",
-        "  @Routable(\"api3/:d\")",
+        "  @Routable(\"/api3/{d}\")",
         "  static class D extends C {",
         "    Integer keyD;",
         "  }",

@@ -36,6 +36,7 @@
     <compile-testing.version>1.0-SNAPSHOT</compile-testing.version>
     <truth.version>1.0-SNAPSHOT</truth.version>
     <autovalue.version>1.0-SNAPSHOT</autovalue.version>
+    <jsr305.version>3.0.0</jsr305.version>
   </properties>
 
   <dependencyManagement>
@@ -69,6 +70,11 @@
         <groupId>com.google.truth</groupId>
         <artifactId>truth</artifactId>
         <version>${truth.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>jsr305</artifactId>
+        <version>${jsr305.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

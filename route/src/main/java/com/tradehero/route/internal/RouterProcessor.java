@@ -6,6 +6,7 @@ import com.tradehero.route.RouteProperty;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -206,13 +207,15 @@ public class RouterProcessor extends AbstractProcessor {
     injectableTargetClasses.add(classElement.toString());
     String[] routes = element.getAnnotation(Routable.class).value();
     RouteInjector routeInjector = getOrCreateTargetRoutePropertyClass(targetClassMap, classElement);
-    routeInjector.addRoutableBinding(RoutableBinding.parse(routes));
 
     // find and process closest ancestor which also annotated by Routable
     Element closestAncestor = findClosestRoutableAncestor(classElement, injectableTargetClasses);
     if (closestAncestor != null) {
       parseRoutable(closestAncestor, targetClassMap, injectableTargetClasses);
     }
+    Map<String, TypeElement> typeMap = new HashMap<String, TypeElement>();
+    RoutableBinding routableBinding = RoutableBinding.parse(routes, typeMap);
+    routeInjector.addRoutableBinding(routableBinding);
   }
 
   static Element findClosestRoutableAncestor(TypeElement typeElement,
