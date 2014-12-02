@@ -1,5 +1,6 @@
 package com.tradehero.route.internal;
 
+import com.sun.tools.javac.code.Type;
 import com.tradehero.route.Routable;
 import com.tradehero.route.RouteProperty;
 import java.io.IOException;
@@ -28,6 +29,7 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.JavaFileObject;
 
+import static com.tradehero.route.internal.Utils.debug;
 import static com.tradehero.route.internal.Utils.stackTraceToString;
 import static javax.lang.model.element.ElementKind.CLASS;
 import static javax.lang.model.element.ElementKind.METHOD;
@@ -40,6 +42,9 @@ import static javax.tools.Diagnostic.Kind.WARNING;
 
 public class RouterProcessor extends AbstractProcessor {
   public static final String SUFFIX = "$$Routable";
+
+  private static final String ANDROID_PREFIX = "android.";
+  private static final String JAVA_PREFIX = "java.";
 
   private TypeToBundleMethodMap typeToBundleMethodMap;
 
@@ -83,18 +88,7 @@ public class RouterProcessor extends AbstractProcessor {
     Map<TypeElement, RouteInjector> targetClassMap = new LinkedHashMap<TypeElement, RouteInjector>();
     Set<String> injectableTargetClasses = new LinkedHashSet<String>();
 
-    // Process each @RouteProperty element.
-    for (Element element : env.getElementsAnnotatedWith(RouteProperty.class)) {
-      try {
-        if (element.getKind() != CLASS) {
-          parseRouteProperty(element, targetClassMap, injectableTargetClasses);
-        }
-      } catch (Exception e) {
-        error(element, "Unable to generate injector for @RouteProperty\n%s", stackTraceToString(e));
-      }
-    }
-
-    // Process each @RouteProperty element.
+    /** Process each @RouteProperty element.*/
     for (Element element : env.getElementsAnnotatedWith(Routable.class)) {
       try {
         if (element.getKind() == CLASS) {
@@ -104,6 +98,20 @@ public class RouterProcessor extends AbstractProcessor {
         error(element, "Unable to generate injector for @RouteProperty\n%s", stackTraceToString(e));
       }
     }
+
+    /**
+     * TODO
+     * Following block of code is going to be remove, since RouteProperty elements will also be
+     * processed while processing @Routable */
+    //for (Element element : env.getElementsAnnotatedWith(RouteProperty.class)) {
+    //  try {
+    //    if (element.getKind() != CLASS) {
+    //      parseRouteProperty(element, targetClassMap, injectableTargetClasses);
+    //    }
+    //  } catch (Exception e) {
+    //    error(element, "Unable to generate injector for @RouteProperty\n%s", stackTraceToString(e));
+    //  }
+    //}
 
     // Try to find a parent injector for each injector.
     for (Map.Entry<TypeElement, RouteInjector> entry : targetClassMap.entrySet()) {
@@ -156,8 +164,8 @@ public class RouterProcessor extends AbstractProcessor {
 
     // Verify annotated element to be a method or a field with bundle-able type
     boolean isMethod = element.getKind() == METHOD;
-    String bundleMethod = typeToBundleMethodMap.convert(isMethod ? getMethodBundleType(element) :
-        elementType);
+    String bundleMethod = typeToBundleMethodMap.convert(
+        isMethod ? getMethodBundleType(element) : elementType);
 
     // Verification completed, generation process started
     // Add current class to list of class for code generation
@@ -180,20 +188,61 @@ public class RouterProcessor extends AbstractProcessor {
     }
   }
 
+  /** Visit class annotated with Routable */
   private void parseRoutable(Element element, Map<TypeElement, RouteInjector> targetClassMap,
       Set<String> injectableTargetClasses) {
-    TypeElement classElement = (TypeElement) element;
+    /** If current class is already processed */
+    if (injectableTargetClasses.contains(element.toString())) {
+      return;
+    }
 
+    debug("Processing: " + element.toString());
+    TypeElement classElement = (TypeElement) element;
     // Verify common generated code restrictions.
     if (isRoutableIncorrectlyAnnotated(Routable.class, element)) {
       return;
     }
 
+    injectableTargetClasses.add(classElement.toString());
     String[] routes = element.getAnnotation(Routable.class).value();
-    // Verify common generated code restrictions.
     RouteInjector routeInjector = getOrCreateTargetRoutePropertyClass(targetClassMap, classElement);
     routeInjector.addRoutableBinding(RoutableBinding.parse(routes));
-    injectableTargetClasses.add(classElement.toString());
+
+    // find and process closest ancestor which also annotated by Routable
+    Element closestAncestor = findClosestRoutableAncestor(classElement, injectableTargetClasses);
+    if (closestAncestor != null) {
+      parseRoutable(closestAncestor, targetClassMap, injectableTargetClasses);
+    }
+  }
+
+  static Element findClosestRoutableAncestor(TypeElement typeElement,
+      Set<String> injectableTargetClasses) {
+    TypeMirror typeMirror = typeElement.getSuperclass();
+    while (!reachedBaseClasses(typeMirror.toString()) && typeMirror instanceof Type.ClassType) {
+      Element currentElement = ((Type.ClassType) typeMirror).asElement();
+      /** If current class is already processed */
+      if (injectableTargetClasses.contains(currentElement.toString())) {
+        return null;
+      }
+      Routable routable = isEligibleForCodeGen(currentElement);
+      /** Found and return */
+      if (routable != null) {
+        return currentElement;
+      }
+      typeMirror = ((TypeElement) currentElement).getSuperclass();
+    }
+
+    return null;
+  }
+
+  /** Check if class element is eligible for code generation */
+  private static Routable isEligibleForCodeGen(Element currentElement) {
+    // TODO, check any of its child elements (fields, methods...) is annotated with @RouteProperty
+    return currentElement.getAnnotation(Routable.class);
+  }
+
+  private static boolean reachedBaseClasses(String className) {
+    return className.startsWith(ANDROID_PREFIX) || className.startsWith(JAVA_PREFIX);
   }
 
   /** extract name from setter/getter method, example: getNumber ---> number */

@@ -46,4 +46,32 @@ public class RoutableGenerationTest {
         .and()
         .generatesSources(generatedSource);
   }
+
+  @Test public void verifyTraversalRoutableTree() {
+
+    JavaFileObject sourceFile = JavaFileObjects.forSourceString("Basic", Joiner.on("\n").join(
+        "import com.tradehero.route.Routable;",
+        "import com.tradehero.route.RouteProperty;",
+        "class Basic {",
+        "  @Routable(\"api/:a\")",
+        "  static class A extends B {",
+        "    Integer key;",
+        "  }",
+        "  static class B extends C {",
+        "    Integer keyB;",
+        "  }",
+        "  @Routable(\"api2/:c\")",
+        "  static class C {",
+        "    @RouteProperty Integer keyC;",
+        "  }",
+        "  @Routable(\"api3/:d\")",
+        "  static class D extends C {",
+        "    Integer keyD;",
+        "  }",
+        "}"
+    ));
+
+    ASSERT.about(javaSource()).that(sourceFile).processedWith(new RouterProcessor())
+        .compilesWithoutError();
+  }
 }

@@ -18,7 +18,7 @@ final class Utils {
 
   static void debug(String log) {
     if (DEBUG) {
-      System.out.println(log);
+      System.out.println("[DEBUG] " + log);
     }
   }
 
