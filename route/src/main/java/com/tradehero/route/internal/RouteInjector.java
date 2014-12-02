@@ -1,5 +1,9 @@
 package com.tradehero.route.internal;
 
+import com.tradehero.route.DynamicPart;
+import com.tradehero.route.PathPart;
+import com.tradehero.route.PathPattern;
+import com.tradehero.route.StaticPart;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -61,10 +65,57 @@ final class RouteInjector {
   }
 
   private void emitRoutes(StringBuilder builder) {
-    builder.append("  ")
-        .append("public static PathPattern[] PATH_PATTERNS = {\n")
-        .append("  ")
-        .append("};");
+    builder.append("  ").append("public static PathPattern[] PATH_PATTERNS = {\n");
+
+    /** TODO could be improved, see {@link com.tradehero.route.internal.RoutableBinding} */
+    for (RoutableBinding binding: routableBinding) {
+      boolean firstPathPattern = true;
+      for (PathPattern pathPattern: binding.pathPatterns) {
+        if (!firstPathPattern) {
+          builder.append(",\n");
+        }
+        firstPathPattern = false;
+        builder.append("    ")
+            .append(PathPattern.class.getSimpleName())
+            .append(".create(");
+        boolean firstPathPart = true;
+        for (PathPart pathPart: pathPattern.parts()) {
+          if (!firstPathPart) {
+            builder.append(", ");
+          }
+          firstPathPart = false;
+          if (pathPart instanceof StaticPart) {
+            builder.append(StaticPart.class.getSimpleName());
+            builder.append(".create(\"");
+            // FIXME String code escape
+            builder.append(((StaticPart) pathPart).value());
+            builder.append("\"");
+          } else if (pathPart instanceof DynamicPart) {
+            DynamicPart dynamicPart = (DynamicPart) pathPart;
+            builder.append(DynamicPart.class.getSimpleName());
+            builder.append(".create(\"");
+            // FIXME String code escape
+            builder.append(dynamicPart.name());
+            builder.append("\", \"");
+
+            /* No need to escape as all of them are listed in BundleType */
+            builder.append(dynamicPart.bundleType());
+            builder.append("\", ");
+
+            String quote = dynamicPart.constraint() != null ? "\"" : "";
+            builder.append(quote)
+                .append(dynamicPart.constraint())
+                .append(quote);
+          } else {
+            // For the future
+            throw new RuntimeException("Unhandled PathPart: " + pathPart.getClass());
+          }
+          builder.append(")");
+        }
+        builder.append(")");
+      }
+    }
+    builder.append("};");
   }
 
   private void emitSaver(StringBuilder builder) {

@@ -20,7 +20,7 @@ public class RoutableGenerationTest {
     JavaFileObject sourceFile = JavaFileObjects.forSourceString("Basic", Joiner.on("\n").join(
         "import com.tradehero.route.Routable;",
         "class Basic {",
-        "  @Routable(\"/api/:a\")",
+        "  @Routable(\"/api/{a}\")",
         "  static class A {",
         "    Integer key;",
         "  }",
@@ -36,7 +36,7 @@ public class RoutableGenerationTest {
             "  public static PathPattern[] PATH_PATTERNS = {",
             "   PathPattern.create(",
             "     StaticPart.create(\"api\"),",
-            "     DynamicPart.create(\"a\", \"[0-9]+\")",
+            "     DynamicPart.create(\"a\", \"String\", \"[0-9]+\")",
             "   )",
             "  };",
             "}"));

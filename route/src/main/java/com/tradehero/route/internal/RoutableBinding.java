@@ -3,6 +3,7 @@ package com.tradehero.route.internal;
 import com.tradehero.route.PathPattern;
 import java.util.Map;
 
+/** TODO Do we really need RoutableBinding, or we can just use PathPattern for RouteInjector */
 class RoutableBinding {
   final PathPattern[] pathPatterns;
 
