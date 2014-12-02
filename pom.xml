@@ -33,9 +33,9 @@
     <android.platform>16</android.platform>
     <junit.version>4.10</junit.version>
     <robolectric.version>2.3</robolectric.version>
-    <compile-testing.version>0.4</compile-testing.version>
-    <truth.version>0.13</truth.version>
-    <autovalue.version>1.0-rc1</autovalue.version>
+    <compile-testing.version>1.0-SNAPSHOT</compile-testing.version>
+    <truth.version>1.0-SNAPSHOT</truth.version>
+    <autovalue.version>1.0-SNAPSHOT</autovalue.version>
   </properties>
 
   <dependencyManagement>
@@ -66,7 +66,7 @@
         <version>${compile-testing.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.truth0</groupId>
+        <groupId>com.google.truth</groupId>
         <artifactId>truth</artifactId>
         <version>${truth.version}</version>
       </dependency>

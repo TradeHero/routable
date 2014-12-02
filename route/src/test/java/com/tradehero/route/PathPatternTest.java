@@ -2,7 +2,7 @@ package com.tradehero.route;
 
 import org.junit.Test;
 
-import static org.truth0.Truth.ASSERT;
+import static com.google.common.truth.Truth.assert_;
 
 public class PathPatternTest {
 
@@ -10,7 +10,7 @@ public class PathPatternTest {
   public void testHas() throws Exception {
     PathPattern pathPattern = PathPattern.create(
         StaticPart.create("api"), DynamicPart.create("users", "[0-9]+"));
-    ASSERT.that(pathPattern.has("users1")).isFalse();
-    ASSERT.that(pathPattern.has("users"));
+    assert_().that(pathPattern.has("users1")).isFalse();
+    assert_().that(pathPattern.has("users"));
   }
 }
