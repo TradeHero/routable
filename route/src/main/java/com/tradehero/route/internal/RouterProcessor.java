@@ -213,7 +213,7 @@ public class RouterProcessor extends AbstractProcessor {
     if (closestAncestor != null) {
       parseRoutable(closestAncestor, targetClassMap, injectableTargetClasses);
     }
-    Map<String, TypeElement> typeMap = new HashMap<String, TypeElement>();
+    Map<String, BundleType> typeMap = new HashMap<String, BundleType>();
     RoutableBinding routableBinding = RoutableBinding.parse(routes, typeMap);
     routeInjector.addRoutableBinding(routableBinding);
   }

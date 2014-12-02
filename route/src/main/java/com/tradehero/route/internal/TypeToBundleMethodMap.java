@@ -10,6 +10,8 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
+import static com.tradehero.route.internal.BundleType.*;
+
 final class TypeToBundleMethodMap {
 
   private final Map<TypeMirror, String> conversionMap = new LinkedHashMap<TypeMirror, String>();
@@ -103,7 +105,7 @@ final class TypeToBundleMethodMap {
     return elementUtils.getTypeElement(type).asType();
   }
 
-  private static final Map<String, String>  DICTIONARY = new LinkedHashMap<String, String>() {{
+  private static final Map<String, String> DICTIONARY = new LinkedHashMap<String, String>() {{
     put("java.util.ArrayList<java.lang.Integer>", "IntegerArrayList");
     put("java.util.ArrayList<java.lang.String>", "StringArrayList");
     put("java.util.ArrayList<java.lang.CharSequence>", "CharSequenceArrayList");
@@ -112,28 +114,28 @@ final class TypeToBundleMethodMap {
     put("android.util.SparseArray<? extends android.os.Parcelable>",
         "SparseParcelableArray");
 
-    put("short", "Short");
-    put("short[]", "ShortArray");
-    put("int", "Int");
-    put("int[]", "IntArray");
-    put("long", "Long");
-    put("long[]", "LongArray");
-    put("float", "Float");
-    put("float[]", "FloatArray");
-    put("double", "Double");
-    put("double[]", "DoubleArray");
-    put("byte", "Byte");
-    put("byte[]", "ByteArray");
-    put("boolean", "Boolean");
-    put("boolean[]", "BooleanArray");
-    put("char", "Char");
-    put("char[]", "CharArray");
-    put("java.lang.String", "String");
-    put("java.lang.String[]", "StringArray");
+    put("short", SHORT.type);
+    put("short[]", SHORT_ARRAY.type);
+    put("int", INT.type);
+    put("int[]", INT_ARRAY.type);
+    put("long", LONG.type);
+    put("long[]", LONG_ARRAY.type);
+    put("float", FLOAT.type);
+    put("float[]", FLOAT_ARRAY.type);
+    put("double", DOUBLE.type);
+    put("double[]", DOUBLE_ARRAY.type);
+    put("byte", BYTE.type);
+    put("byte[]", BYTE_ARRAY.type);
+    put("boolean", BOOLEAN.type);
+    put("boolean[]", BOOLEAN_ARRAY.type);
+    put("char", CHAR.type);
+    put("char[]", CHAR_ARRAY.type);
+    put("java.lang.String", STRING.type);
+    put("java.lang.String[]", STRING_ARRAY.type);
     put("android.os.Bundle", "Bundle");
 
-    put("java.lang.CharSequence", "CharSequence");
-    put("java.lang.CharSequence[]", "CharSequenceArray");
+    put("java.lang.CharSequence", CHAR_SEQUENCE.type);
+    put("java.lang.CharSequence[]", CHAR_SEQUENCE_ARRAY.type);
     put("android.os.Parcelable", "Parcelable");
     put("android.os.Parcelable[]", "ParcelableArray");
     put("java.io.Serializable", "Serializable");
