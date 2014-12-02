@@ -3,10 +3,10 @@
 
 2. Visit class which is annotated with @Routable (question: in which order?)
 
-3. Whenever visit a class, which is not visited before -->
-        - visit super class if super class annotated with Routable (
-        - mark as visited
-        - parse and generate PATH_PATTERNS
+3. Whenever visit a class, which is not visited before
+    - visit super class if it is eligible for code generation (either annotated with Routable or has at least a child, field or method annotated with RouteProperty)
+    - mark as visited
+    - parse and generate PATH_PATTERNS
 
 Given a class (annotated with @Routable), how to get list of child fields annotated with 
 @RouteProperty, for building a graph (question: can use tree?) like this: 
@@ -21,5 +21,5 @@ ClassNode
 
 routeInjector
 
-    --- field Binding ---> child ClassNodes (RouteProperty)
-    --- annotated Routable super class ---> child ClassNodes (Routable)
+    - field Binding ---> child ClassNodes (RouteProperty)
+    - annotated Routable super class ---> child ClassNodes (Routable)
