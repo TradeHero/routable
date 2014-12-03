@@ -6,7 +6,7 @@ import com.tradehero.route.Routable;
 import com.tradehero.route.Router;
 
 @Routable({
-    "users/:userId", "users/:userId/portfolio/:portfolioId"
+    "/users/{userId}", "/users/{userId}/portfolio/{portfolioId}"
 })
 public class UserActivity extends DummySuperActivity {
 

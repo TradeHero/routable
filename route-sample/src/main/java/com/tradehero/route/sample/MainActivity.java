@@ -21,7 +21,7 @@ public class MainActivity extends Activity {
     TextView openByRoute = (TextView) findViewById(R.id.open_by_route);
     openByRoute.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View view) {
-        router.open("users/16");
+        router.open("/users/16");
       }
     });
 
