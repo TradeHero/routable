@@ -1,10 +1,10 @@
 package com.tradehero.route;
 
 import com.google.auto.value.AutoValue;
-import com.sun.istack.internal.NotNull;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 /**
  * A complete path pattern, consisting of a sequence of path parts.
@@ -25,7 +25,7 @@ public abstract class PathPattern {
   /**
    * Whether this path pattern has a parameter by the given name.
    */
-  public final boolean has(@NotNull String key) {
+  public final boolean has(@Nonnull String key) {
     for (PathPart partPath: parts()) {
       if (partPath instanceof DynamicPart) {
         if (key.equals(((DynamicPart) partPath).name())) {

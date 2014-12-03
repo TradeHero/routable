@@ -337,7 +337,6 @@ public class Router {
       if (debug) Log.d(TAG, "HIT: Class loaded injection class.");
     } catch (ClassNotFoundException e) {
       if (debug) Log.d(TAG, "Not found. Trying superclass " + cls.getSuperclass().getName());
-      // TODO: consider parent to be injected too?
       inject = findInjectorForClass(cls.getSuperclass());
     }
     INJECTORS.put(cls, inject);
@@ -361,6 +360,7 @@ public class Router {
       if (debug) Log.d(TAG, "HIT: Class loaded injection class.");
     } catch (ClassNotFoundException e) {
       if (debug) Log.d(TAG, "Not found. Trying superclass " + cls.getSuperclass().getName());
+      // TODO: consider parent to be injected too?
     }
     SAVERS.put(cls, inject);
     return inject;
