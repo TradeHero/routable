@@ -8,8 +8,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import static com.google.common.truth.Truth.assert_;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
-import static org.truth0.Truth.ASSERT;
 
 /**
  * Created by tho on 22/07/2014.
@@ -41,7 +41,7 @@ public class RoutableGenerationTest {
             "  };",
             "}"));
 
-    ASSERT.about(javaSource())
+    assert_().about(javaSource())
         .that(sourceFile)
         .processedWith(new RouterProcessor())
         .compilesWithoutError()
@@ -73,7 +73,7 @@ public class RoutableGenerationTest {
         "}"
     ));
 
-    ASSERT.about(javaSource()).that(sourceFile).processedWith(new RouterProcessor())
+    assert_().about(javaSource()).that(sourceFile).processedWith(new RouterProcessor())
         .compilesWithoutError();
   }
 }
