@@ -4,7 +4,9 @@ import com.tradehero.route.DynamicPart;
 import com.tradehero.route.PathPart;
 import com.tradehero.route.PathPattern;
 import com.tradehero.route.StaticPart;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 final class RouteInjector {
@@ -13,7 +15,8 @@ final class RouteInjector {
   private final String bundleKey;
   private final String className;
   private final Set<FieldBinding> fieldBinding = new LinkedHashSet<FieldBinding>();
-  private final Set<RoutableBinding> routableBinding = new LinkedHashSet<RoutableBinding>();
+  private final Set<PathPatternBuilder> pathPatternBuilders = new LinkedHashSet<PathPatternBuilder>();
+  private final Map<String, BundleType> typeMapRepo = new HashMap<String, BundleType>();
   private String parentInjector;
 
   RouteInjector(String classPackage, String className, String targetClass, String bundleKey) {
@@ -36,7 +39,7 @@ final class RouteInjector {
     builder.append("import android.os.Bundle;\n");
     builder.append("import com.tradehero.route.Router;\n");
 
-    if (routableBinding.size() > 0) {
+    if (pathPatternBuilders.size() > 0) {
       builder.append("import com.tradehero.route.DynamicPart;\n");
       builder.append("import com.tradehero.route.PathPattern;\n");
       builder.append("import com.tradehero.route.StaticPart;\n");
@@ -45,7 +48,7 @@ final class RouteInjector {
 
     // class content
     builder.append("public final class ").append(className).append(" {\n");
-    if (routableBinding.size() > 0) {
+    if (pathPatternBuilders.size() > 0) {
       emitRoutes(builder);
       builder.append("\n\n");
     }
@@ -67,53 +70,48 @@ final class RouteInjector {
   private void emitRoutes(StringBuilder builder) {
     builder.append("  ").append("public static PathPattern[] PATH_PATTERNS = {\n");
 
-    /** TODO could be improved, see {@link com.tradehero.route.internal.RoutableBinding} */
-    for (RoutableBinding binding: routableBinding) {
-      boolean firstPathPattern = true;
-      for (PathPattern pathPattern: binding.pathPatterns) {
-        if (!firstPathPattern) {
-          builder.append(",\n");
+    boolean firstPathPattern = true;
+    for (PathPatternBuilder pathPatternBuilder : pathPatternBuilders) {
+      if (!firstPathPattern) {
+        builder.append(",\n");
+      }
+      firstPathPattern = false;
+      builder.append("    ").append(PathPattern.class.getSimpleName()).append(".create(");
+
+      PathPattern pathPattern = pathPatternBuilder.typeMap(typeMapRepo).build();
+      boolean firstPathPart = true;
+      for (PathPart pathPart : pathPattern.parts()) {
+        if (!firstPathPart) {
+          builder.append(", ");
         }
-        firstPathPattern = false;
-        builder.append("    ")
-            .append(PathPattern.class.getSimpleName())
-            .append(".create(");
-        boolean firstPathPart = true;
-        for (PathPart pathPart: pathPattern.parts()) {
-          if (!firstPathPart) {
-            builder.append(", ");
-          }
-          firstPathPart = false;
-          if (pathPart instanceof StaticPart) {
-            builder.append(StaticPart.class.getSimpleName());
-            builder.append(".create(\"");
-            // FIXME String code escape
-            builder.append(((StaticPart) pathPart).value());
-            builder.append("\"");
-          } else if (pathPart instanceof DynamicPart) {
-            DynamicPart dynamicPart = (DynamicPart) pathPart;
-            builder.append(DynamicPart.class.getSimpleName());
-            builder.append(".create(\"");
-            // FIXME String code escape
-            builder.append(dynamicPart.name());
-            builder.append("\", \"");
+        firstPathPart = false;
+        if (pathPart instanceof StaticPart) {
+          builder.append(StaticPart.class.getSimpleName());
+          builder.append(".create(\"");
+          // FIXME String code escape
+          builder.append(((StaticPart) pathPart).value());
+          builder.append("\"");
+        } else if (pathPart instanceof DynamicPart) {
+          DynamicPart dynamicPart = (DynamicPart) pathPart;
+          builder.append(DynamicPart.class.getSimpleName());
+          builder.append(".create(\"");
+          // FIXME String code escape
+          builder.append(dynamicPart.name());
+          builder.append("\", \"");
 
             /* No need to escape as all of them are listed in BundleType */
-            builder.append(dynamicPart.bundleType());
-            builder.append("\", ");
+          builder.append(dynamicPart.bundleType());
+          builder.append("\", ");
 
-            String quote = dynamicPart.constraint() != null ? "\"" : "";
-            builder.append(quote)
-                .append(dynamicPart.constraint())
-                .append(quote);
-          } else {
-            // For the future
-            throw new RuntimeException("Unhandled PathPart: " + pathPart.getClass());
-          }
-          builder.append(")");
+          String quote = dynamicPart.constraint() != null ? "\"" : "";
+          builder.append(quote).append(dynamicPart.constraint()).append(quote);
+        } else {
+          // For the future
+          throw new RuntimeException("Unhandled PathPart: " + pathPart.getClass());
         }
         builder.append(")");
       }
+      builder.append(")");
     }
     builder.append("};");
   }
@@ -251,8 +249,8 @@ final class RouteInjector {
   public void addFieldBinding(FieldBinding binding) {
     fieldBinding.add(binding);
   }
-  public void addRoutableBinding(RoutableBinding binding) {
-    routableBinding.add(binding);
+  public void addPathPatternBuilder(PathPatternBuilder pathPattern) {
+    pathPatternBuilders.add(pathPattern);
   }
 
   public void setParentInjector(String parentInjector) {

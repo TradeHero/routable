@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 import com.google.testing.compile.JavaFileObjects;
 import com.tradehero.route.internal.RouterProcessor;
 import javax.tools.JavaFileObject;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -16,6 +17,7 @@ import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
  */
 @RunWith(JUnit4.class)
 public class RoutableGenerationTest {
+  @Ignore
   @Test public void basicRoutableGeneration() {
     JavaFileObject sourceFile = JavaFileObjects.forSourceString("Basic", Joiner.on("\n").join(
         "import com.tradehero.route.Routable;",

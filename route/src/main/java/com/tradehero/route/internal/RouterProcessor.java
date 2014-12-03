@@ -6,7 +6,6 @@ import com.tradehero.route.RouteProperty;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -100,19 +99,15 @@ public class RouterProcessor extends AbstractProcessor {
       }
     }
 
-    /**
-     * TODO
-     * Following block of code is going to be remove, since RouteProperty elements will also be
-     * processed while processing @Routable */
-    //for (Element element : env.getElementsAnnotatedWith(RouteProperty.class)) {
-    //  try {
-    //    if (element.getKind() != CLASS) {
-    //      parseRouteProperty(element, targetClassMap, injectableTargetClasses);
-    //    }
-    //  } catch (Exception e) {
-    //    error(element, "Unable to generate injector for @RouteProperty\n%s", stackTraceToString(e));
-    //  }
-    //}
+    for (Element element : env.getElementsAnnotatedWith(RouteProperty.class)) {
+      try {
+        if (element.getKind() != CLASS) {
+          parseRouteProperty(element, targetClassMap, injectableTargetClasses);
+        }
+      } catch (Exception e) {
+        error(element, "Unable to generate injector for @RouteProperty\n%s", stackTraceToString(e));
+      }
+    }
 
     // Try to find a parent injector for each injector.
     for (Map.Entry<TypeElement, RouteInjector> entry : targetClassMap.entrySet()) {
@@ -205,7 +200,6 @@ public class RouterProcessor extends AbstractProcessor {
     }
 
     injectableTargetClasses.add(classElement.toString());
-    String[] routes = element.getAnnotation(Routable.class).value();
     RouteInjector routeInjector = getOrCreateTargetRoutePropertyClass(targetClassMap, classElement);
 
     // find and process closest ancestor which also annotated by Routable
@@ -213,9 +207,11 @@ public class RouterProcessor extends AbstractProcessor {
     if (closestAncestor != null) {
       parseRoutable(closestAncestor, targetClassMap, injectableTargetClasses);
     }
-    Map<String, BundleType> typeMap = new HashMap<String, BundleType>();
-    RoutableBinding routableBinding = RoutableBinding.parse(routes, typeMap);
-    routeInjector.addRoutableBinding(routableBinding);
+
+    String[] routes = element.getAnnotation(Routable.class).value();
+    for (String route : routes) {
+      routeInjector.addPathPatternBuilder(new PathPatternBuilder(route));
+    }
   }
 
   static Element findClosestRoutableAncestor(TypeElement typeElement,
