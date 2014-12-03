@@ -1,9 +1,9 @@
 package com.tradehero.route.internal;
 
-class RedirectBinding extends FieldBinding {
+class IndirectBinding extends FieldBinding {
   final String creatorName;
 
-  public RedirectBinding(String name, String creatorName) {
+  public IndirectBinding(String name, String creatorName) {
     super(name);
     this.creatorName = creatorName;
   }

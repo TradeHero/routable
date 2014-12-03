@@ -4,7 +4,6 @@ import com.google.common.base.Joiner;
 import com.google.testing.compile.JavaFileObjects;
 import com.tradehero.route.internal.RouterProcessor;
 import javax.tools.JavaFileObject;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -17,20 +16,22 @@ import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
  */
 @RunWith(JUnit4.class)
 public class RoutableGenerationTest {
-  @Ignore
   @Test public void basicRoutableGeneration() {
     JavaFileObject sourceFile = JavaFileObjects.forSourceString("Basic", Joiner.on("\n").join(
         "import com.tradehero.route.Routable;",
+        "import com.tradehero.route.RouteProperty;",
         "class Basic {",
         "  @Routable(\"/api/{a}\")",
         "  static class A {",
-        "    Integer key;",
+        "    @RouteProperty Integer a;",
         "  }",
         "}"
     ));
 
     JavaFileObject generatedSource = JavaFileObjects.forSourceString("Basic$A$$Routable",
         Joiner.on("\n").join(
+            "import android.os.Bundle;",
+            "import com.tradehero.route.Router;",
             "import com.tradehero.route.DynamicPart;",
             "import com.tradehero.route.PathPattern;",
             "import com.tradehero.route.StaticPart;",
@@ -38,9 +39,24 @@ public class RoutableGenerationTest {
             "  public static PathPattern[] PATH_PATTERNS = {",
             "   PathPattern.create(",
             "     StaticPart.create(\"api\"),",
-            "     DynamicPart.create(\"a\", \"String\", \"[0-9]+\")",
+            "     DynamicPart.create(\"a\", \"Int\", null)",
             "   )",
             "  };",
+            "  public static void inject(final Basic.A target, Bundle source) {",
+            "    Bundle subBundle = source.getBundle(\"Basic.A\");",
+            "    if (subBundle != null) {",
+            "      inject(target, subBundle);",
+            "    }",
+            "    if (source.containsKey(\"a\")) {",
+            "      target.a = source.getInt(\"a\");",
+            "    }",
+            "  }",
+            "  public static void save(final Basic.A source, Bundle dest, boolean flat) {",
+            "    Bundle toWrite = null;",
+            "    toWrite = flat ? dest : new Bundle();",
+            "    toWrite.putInt(\"a\", source.a);",
+            "    if (!flat) dest.putBundle(\"Basic.A\", toWrite);",
+            "  }",
             "}"));
 
     assert_().about(javaSource())

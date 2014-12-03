@@ -172,14 +172,14 @@ public class RouterProcessor extends AbstractProcessor {
       message(NOTE, element, (isMethod ? "Method" : "Field") + " %s type is not bundle-able, "
               + "indirect injection will be taking place!",
           element.getSimpleName());
-      FieldBinding binding = new RedirectBinding(name, elementType.toString());
+      FieldBinding binding = new IndirectBinding(name, elementType.toString());
       routeInjector.addFieldBinding(binding);
     } else {
       String bundleKey = element.getAnnotation(RouteProperty.class).value();
       if (isMethod && Utils.isNullOrEmpty(bundleKey)) {
         bundleKey = nameFromMutator(name);
       }
-      RoutePropertyBinding binding = new RoutePropertyBinding(name, bundleMethod, bundleKey, isMethod);
+      BundleableBinding binding = new BundleableBinding(name, bundleMethod, bundleKey, isMethod);
       routeInjector.addFieldBinding(binding);
     }
   }

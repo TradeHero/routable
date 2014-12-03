@@ -1,19 +1,19 @@
 package com.tradehero.route.internal;
 
-final class RoutePropertyBinding extends FieldBinding {
+final class BundleableBinding extends FieldBinding {
   private final boolean isMethod;
   private final BundleType bundleMethod;
   private final String bundleKey;
 
-  public RoutePropertyBinding(String name, BundleType bundleMethod, String bundleKey, boolean isMethod) {
+  public BundleableBinding(String name, BundleType bundleMethod, String bundleKey, boolean isMethod) {
     super(name);
     this.bundleMethod = bundleMethod;
     this.bundleKey = bundleKey;
     this.isMethod = isMethod;
   }
 
-  public String getBundleMethod() {
-    return bundleMethod.type;
+  public BundleType getBundleMethod() {
+    return bundleMethod;
   }
 
   public String getBundleKey() {

@@ -63,12 +63,18 @@ final class RouteInjector {
 
     builder.append("}\n");
 
-    Utils.debug(builder.toString());
     return builder.toString();
   }
 
   private void emitRoutes(StringBuilder builder) {
     builder.append("  ").append("public static PathPattern[] PATH_PATTERNS = {\n");
+
+    for (FieldBinding binding: fieldBinding) {
+      if (binding instanceof BundleableBinding) {
+        BundleableBinding routeBinding = (BundleableBinding) binding;
+        typeMapRepo.put(routeBinding.getBundleKey(), routeBinding.getBundleMethod());
+      }
+    }
 
     boolean firstPathPattern = true;
     for (PathPatternBuilder pathPatternBuilder : pathPatternBuilders) {
@@ -128,8 +134,8 @@ final class RouteInjector {
         .append("toWrite = flat ? dest : new Bundle();\n");
 
     for (FieldBinding binding: fieldBinding) {
-      if (binding instanceof RoutePropertyBinding) {
-        emitSaveBinding(builder, (RoutePropertyBinding) binding);
+      if (binding instanceof BundleableBinding) {
+        emitSaveBinding(builder, (BundleableBinding) binding);
       } else {
         emitRedirectSaveBinding(builder, binding);
       }
@@ -168,10 +174,10 @@ final class RouteInjector {
         .append("}\n");
 
     for (FieldBinding binding: fieldBinding) {
-      if (binding instanceof RoutePropertyBinding) {
-        emitInjectBinding(builder, (RoutePropertyBinding) binding);
-      } else if (binding instanceof RedirectBinding) {
-        emitRedirectBinding(builder, (RedirectBinding) binding);
+      if (binding instanceof BundleableBinding) {
+        emitInjectBinding(builder, (BundleableBinding) binding);
+      } else if (binding instanceof IndirectBinding) {
+        emitRedirectBinding(builder, (IndirectBinding) binding);
       } else {
         throw new IllegalStateException("Unknown FieldBinding type: " + binding.getClass());
       }
@@ -180,7 +186,7 @@ final class RouteInjector {
     builder.append("  }");
   }
 
-  private void emitRedirectBinding(StringBuilder builder, RedirectBinding binding) {
+  private void emitRedirectBinding(StringBuilder builder, IndirectBinding binding) {
     String fieldPath = "target." + binding.getName();
 
     builder.append("    ")
@@ -198,7 +204,7 @@ final class RouteInjector {
         .append(", source);\n");
   }
 
-  private void emitInjectBinding(StringBuilder builder, RoutePropertyBinding binding) {
+  private void emitInjectBinding(StringBuilder builder, BundleableBinding binding) {
     if (binding.isMethod() && !binding.getName().startsWith("set")) {
       return;
     }
@@ -224,7 +230,7 @@ final class RouteInjector {
         .append("}\n");
   }
 
-  private void emitSaveBinding(StringBuilder builder, RoutePropertyBinding binding) {
+  private void emitSaveBinding(StringBuilder builder, BundleableBinding binding) {
     if (binding.isMethod() && !binding.getName().startsWith("get")) {
       return;
     }
