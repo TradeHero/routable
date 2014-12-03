@@ -20,7 +20,16 @@ enum BundleType {
   STRING("String"),
   STRING_ARRAY("StringArray"),
   CHAR_SEQUENCE("CharSequence"),
-  CHAR_SEQUENCE_ARRAY("CharSequenceArray")
+  CHAR_SEQUENCE_ARRAY("CharSequenceArray"),
+  BUNDLE("Bundle"),
+  PARCELABLE("Parcelable"),
+  PARCELABLE_ARRAY("ParcelableArray"),
+  SERIALIZABLE("Serializable"),
+  INTEGER_ARRAYLIST("IntegerArrayList"),
+  STRING_ARRAYLIST("StringArrayList"),
+  CHAR_SEQUENCE_ARRAYLIST("CharSequenceArrayList"),
+  PARCELABLE_ARRAYLIST("ParcelableArrayList"),
+  SPARSE_PARCELABLE_ARRAY("SparseParcelableArray")
   ;
 
   final String type;

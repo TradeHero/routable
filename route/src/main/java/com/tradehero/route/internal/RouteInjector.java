@@ -170,15 +170,17 @@ final class RouteInjector {
     for (FieldBinding binding: fieldBinding) {
       if (binding instanceof RoutePropertyBinding) {
         emitInjectBinding(builder, (RoutePropertyBinding) binding);
+      } else if (binding instanceof RedirectBinding) {
+        emitRedirectBinding(builder, (RedirectBinding) binding);
       } else {
-        emitRedirectBinding(builder, binding);
+        throw new IllegalStateException("Unknown FieldBinding type: " + binding.getClass());
       }
     }
 
     builder.append("  }");
   }
 
-  private void emitRedirectBinding(StringBuilder builder, FieldBinding binding) {
+  private void emitRedirectBinding(StringBuilder builder, RedirectBinding binding) {
     String fieldPath = "target." + binding.getName();
 
     builder.append("    ")
@@ -187,7 +189,7 @@ final class RouteInjector {
         .append(" == null) ")
         .append(fieldPath)
         .append(" = new ")
-        .append(binding.getBundleMethod())
+        .append(binding.creatorName)
         .append("();\n");
 
     builder.append("    ")

@@ -160,7 +160,7 @@ public class RouterProcessor extends AbstractProcessor {
 
     // Verify annotated element to be a method or a field with bundle-able type
     boolean isMethod = element.getKind() == METHOD;
-    String bundleMethod = typeToBundleMethodMap.convert(
+    BundleType bundleMethod = typeToBundleMethodMap.convert(
         isMethod ? getMethodBundleType(element) : elementType);
 
     // Verification completed, generation process started
@@ -172,7 +172,7 @@ public class RouterProcessor extends AbstractProcessor {
       message(NOTE, element, (isMethod ? "Method" : "Field") + " %s type is not bundle-able, "
               + "indirect injection will be taking place!",
           element.getSimpleName());
-      FieldBinding binding = new FieldBinding(name, elementType.toString());
+      FieldBinding binding = new RedirectBinding(name, elementType.toString());
       routeInjector.addFieldBinding(binding);
     } else {
       String bundleKey = element.getAnnotation(RouteProperty.class).value();

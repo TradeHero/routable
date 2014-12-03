@@ -2,18 +2,12 @@ package com.tradehero.route.internal;
 
 class FieldBinding {
   private String name;
-  private String bundleMethod;
 
-  public FieldBinding(String name, String bundleMethod) {
+  protected FieldBinding(String name) {
     this.name = name;
-    this.bundleMethod = bundleMethod;
   }
 
-  public String getBundleMethod() {
-    return bundleMethod;
-  }
-
-  public String getName() {
+  public final String getName() {
     return name;
   }
 }

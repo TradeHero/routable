@@ -14,7 +14,7 @@ import static com.tradehero.route.internal.BundleType.*;
 
 final class TypeToBundleMethodMap {
 
-  private final Map<TypeMirror, String> conversionMap = new LinkedHashMap<TypeMirror, String>();
+  private final Map<TypeMirror, BundleType> conversionMap = new LinkedHashMap<TypeMirror, BundleType>();
 
   private final Elements elementUtils;
   private final Types typeUtils;
@@ -28,7 +28,7 @@ final class TypeToBundleMethodMap {
     }
   }
 
-  public String convert(TypeMirror fieldType) {
+  public BundleType convert(TypeMirror fieldType) {
     for (TypeMirror candidate : conversionMap.keySet()) {
       if (typeUtils.isAssignable(fieldType, candidate)) {
         return conversionMap.get(candidate);
@@ -37,7 +37,7 @@ final class TypeToBundleMethodMap {
     return null;
   }
 
-  private void put(TypeMirror type, String method) {
+  private void put(TypeMirror type, BundleType method) {
     conversionMap.put(type, method);
   }
 
@@ -105,39 +105,37 @@ final class TypeToBundleMethodMap {
     return elementUtils.getTypeElement(type).asType();
   }
 
-  private static final Map<String, String> DICTIONARY = new LinkedHashMap<String, String>() {{
-    put("java.util.ArrayList<java.lang.Integer>", "IntegerArrayList");
-    put("java.util.ArrayList<java.lang.String>", "StringArrayList");
-    put("java.util.ArrayList<java.lang.CharSequence>", "CharSequenceArrayList");
+  private static final Map<String, BundleType> DICTIONARY = new LinkedHashMap<String, BundleType>() {{
+    put("short", SHORT);
+    put("short[]", SHORT_ARRAY);
+    put("int", INT);
+    put("int[]", INT_ARRAY);
+    put("long", LONG);
+    put("long[]", LONG_ARRAY);
+    put("float", FLOAT);
+    put("float[]", FLOAT_ARRAY);
+    put("double", DOUBLE);
+    put("double[]", DOUBLE_ARRAY);
+    put("byte", BYTE);
+    put("byte[]", BYTE_ARRAY);
+    put("boolean", BOOLEAN);
+    put("boolean[]", BOOLEAN_ARRAY);
+    put("char", CHAR);
+    put("char[]", CHAR_ARRAY);
+    put("java.lang.String", STRING);
+    put("java.lang.String[]", STRING_ARRAY);
+    put("java.lang.CharSequence", CHAR_SEQUENCE);
+    put("java.lang.CharSequence[]", CHAR_SEQUENCE_ARRAY);
 
-    put("java.util.ArrayList<? extends android.os.Parcelable>", "ParcelableArrayList");
-    put("android.util.SparseArray<? extends android.os.Parcelable>",
-        "SparseParcelableArray");
-
-    put("short", SHORT.type);
-    put("short[]", SHORT_ARRAY.type);
-    put("int", INT.type);
-    put("int[]", INT_ARRAY.type);
-    put("long", LONG.type);
-    put("long[]", LONG_ARRAY.type);
-    put("float", FLOAT.type);
-    put("float[]", FLOAT_ARRAY.type);
-    put("double", DOUBLE.type);
-    put("double[]", DOUBLE_ARRAY.type);
-    put("byte", BYTE.type);
-    put("byte[]", BYTE_ARRAY.type);
-    put("boolean", BOOLEAN.type);
-    put("boolean[]", BOOLEAN_ARRAY.type);
-    put("char", CHAR.type);
-    put("char[]", CHAR_ARRAY.type);
-    put("java.lang.String", STRING.type);
-    put("java.lang.String[]", STRING_ARRAY.type);
-    put("android.os.Bundle", "Bundle");
-
-    put("java.lang.CharSequence", CHAR_SEQUENCE.type);
-    put("java.lang.CharSequence[]", CHAR_SEQUENCE_ARRAY.type);
-    put("android.os.Parcelable", "Parcelable");
-    put("android.os.Parcelable[]", "ParcelableArray");
-    put("java.io.Serializable", "Serializable");
+    // url supported?
+    put("android.os.Bundle", BUNDLE);
+    put("android.os.Parcelable", PARCELABLE);
+    put("android.os.Parcelable[]", PARCELABLE_ARRAY);
+    put("java.io.Serializable", SERIALIZABLE);
+    put("java.util.ArrayList<java.lang.Integer>", INTEGER_ARRAYLIST);
+    put("java.util.ArrayList<java.lang.String>", STRING_ARRAYLIST);
+    put("java.util.ArrayList<java.lang.CharSequence>", CHAR_SEQUENCE_ARRAYLIST);
+    put("java.util.ArrayList<? extends android.os.Parcelable>", PARCELABLE_ARRAYLIST);
+    put("android.util.SparseArray<? extends android.os.Parcelable>", SPARSE_PARCELABLE_ARRAY);
   }};
 }
