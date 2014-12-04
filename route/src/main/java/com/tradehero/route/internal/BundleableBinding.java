@@ -5,6 +5,23 @@ final class BundleableBinding extends FieldBinding {
   private final BundleType bundleMethod;
   private final String bundleKey;
 
+  /**
+   * Binding for types which is supported by Bundle (Int, String, Short...)
+   * For list of supporting type, see {@link com.tradehero.route.internal.BundleType},
+   * for the other types, use {@link com.tradehero.route.internal.IndirectBinding}
+   *
+   * Example: {@code @RouteProperty("foo") Integer bar } has
+   *  - name: bar
+   *  - bundleMethod: Int
+   *  - bundleKey: foo
+   *  - isMethod: false
+   * using that binding we can generate {@code bundle.putInt("foo", bar) }
+   *
+   * @param name name of the element (field or method) which annotated by @RouteProperty
+   * @param bundleMethod method from Bundle for the element
+   * @param bundleKey associated key of the element
+   * @param isMethod true if element is a method, false otherwise
+   */
   public BundleableBinding(String name, BundleType bundleMethod, String bundleKey, boolean isMethod) {
     super(name);
     this.bundleMethod = bundleMethod;
