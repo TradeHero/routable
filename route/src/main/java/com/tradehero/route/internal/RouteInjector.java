@@ -69,13 +69,6 @@ final class RouteInjector {
   private void emitRoutes(StringBuilder builder) {
     builder.append("  ").append("public static PathPattern[] PATH_PATTERNS = {\n");
 
-    for (FieldBinding binding: fieldBinding) {
-      if (binding instanceof BundleableBinding) {
-        BundleableBinding routeBinding = (BundleableBinding) binding;
-        typeMapRepo.put(routeBinding.getBundleKey(), routeBinding.getBundleMethod());
-      }
-    }
-
     boolean firstPathPattern = true;
     for (PathPatternBuilder pathPatternBuilder : pathPatternBuilders) {
       if (!firstPathPattern) {
@@ -256,6 +249,11 @@ final class RouteInjector {
 
   public void addFieldBinding(FieldBinding binding) {
     fieldBinding.add(binding);
+
+    if (binding instanceof BundleableBinding) {
+      BundleableBinding routeBinding = (BundleableBinding) binding;
+      typeMapRepo.put(routeBinding.getBundleKey(), routeBinding.getBundleMethod());
+    }
   }
   public void addPathPatternBuilder(PathPatternBuilder pathPattern) {
     pathPatternBuilders.add(pathPattern);
