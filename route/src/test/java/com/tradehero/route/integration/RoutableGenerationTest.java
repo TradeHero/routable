@@ -19,7 +19,8 @@ public class RoutableGenerationTest {
     JavaFileObject sourceFile = JavaFileObjects.forResource("BasicRoutable.java");
     JavaFileObject generatedSource = JavaFileObjects.forResource("BasicRoutable$A$$Routable.java");
 
-    assert_().about(javaSource()).that(sourceFile)
+    assert_().about(javaSource())
+        .that(sourceFile)
         .processedWith(new RouterProcessor())
         .compilesWithoutError()
         .and()
@@ -28,8 +29,24 @@ public class RoutableGenerationTest {
 
   @Test public void verifyTraversalRoutableTree() {
     JavaFileObject sourceFile = JavaFileObjects.forResource("TraversalRoutableTree.java");
-    assert_().about(javaSource()).that(sourceFile)
+    assert_().about(javaSource())
+        .that(sourceFile)
         .processedWith(new RouterProcessor())
         .compilesWithoutError();
+  }
+
+  @Test public void verifyInheritTypePassing() {
+    JavaFileObject sourceFile = JavaFileObjects.forResource("p/InheritTypePassing.java");
+    JavaFileObject generatedSource1 = JavaFileObjects
+        .forResource("p/InheritTypePassing$$Routable.java");
+    JavaFileObject generatedSource2 = JavaFileObjects
+        .forResource("p/InheritTypePassing$Prop$$Routable.java");
+
+    assert_().about(javaSource())
+        .that(sourceFile)
+        .processedWith(new RouterProcessor())
+        .compilesWithoutError()
+        .and()
+        .generatesSources(generatedSource1, generatedSource2);
   }
 }
