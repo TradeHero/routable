@@ -1,5 +1,8 @@
 package com.tradehero.route.internal;
 
+import java.util.Collections;
+import java.util.Map;
+
 final class BundleableBinding extends FieldBinding {
   private final boolean isMethod;
   private final BundleType bundleMethod;
@@ -39,5 +42,9 @@ final class BundleableBinding extends FieldBinding {
 
   public boolean isMethod() {
     return isMethod;
+  }
+
+  @Override public Map<String, BundleType> typeMap() {
+    return Collections.singletonMap(getBundleKey(), bundleMethod);
   }
 }

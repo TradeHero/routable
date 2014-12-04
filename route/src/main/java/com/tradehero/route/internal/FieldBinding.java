@@ -1,6 +1,8 @@
 package com.tradehero.route.internal;
 
-class FieldBinding {
+import java.util.Map;
+
+abstract class FieldBinding {
   private String name;
 
   protected FieldBinding(String name) {
@@ -10,4 +12,6 @@ class FieldBinding {
   public final String getName() {
     return name;
   }
+  
+  public abstract Map<String, BundleType> typeMap();
 }

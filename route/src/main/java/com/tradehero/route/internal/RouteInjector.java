@@ -4,30 +4,25 @@ import com.tradehero.route.DynamicPart;
 import com.tradehero.route.PathPart;
 import com.tradehero.route.PathPattern;
 import com.tradehero.route.StaticPart;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 
 final class RouteInjector {
   private final String classPackage;
   private final String targetClass;
-  private final String bundleKey;
-  private final String className;
-  private final Set<FieldBinding> fieldBinding = new LinkedHashSet<FieldBinding>();
+  private final IndirectBinding ownBinding;
   private final Set<PathPatternBuilder> pathPatternBuilders = new LinkedHashSet<PathPatternBuilder>();
-  private final Map<String, BundleType> typeMapRepo = new HashMap<String, BundleType>();
   private String parentInjector;
 
   RouteInjector(String classPackage, String className, String targetClass, String bundleKey) {
     this.classPackage = classPackage;
-    this.className = className;
     this.targetClass = targetClass;
-    this.bundleKey = bundleKey;
+    this.ownBinding = new IndirectBinding(bundleKey, className);
   }
 
   String getFqcn() {
-    return Utils.isNullOrEmpty(classPackage) ? className : classPackage + "." + className;
+    return (Utils.isNullOrEmpty(classPackage) ? "" : classPackage + ".") +
+        ownBinding.getClassName();
   }
 
   String brewJava() {
@@ -47,13 +42,13 @@ final class RouteInjector {
     builder.append("\n");
 
     // class content
-    builder.append("public final class ").append(className).append(" {\n");
+    builder.append("public final class ").append(ownBinding.getClassName()).append(" {\n");
     if (pathPatternBuilders.size() > 0) {
       emitRoutes(builder);
       builder.append("\n\n");
     }
 
-    if (fieldBinding.size() > 0) {
+    if (ownBinding.bindings().size() > 0) {
       emitInject(builder);
       builder.append("\n\n");
 
@@ -77,7 +72,7 @@ final class RouteInjector {
       firstPathPattern = false;
       builder.append("    ").append(PathPattern.class.getSimpleName()).append(".create(");
 
-      PathPattern pathPattern = pathPatternBuilder.typeMap(typeMapRepo).build();
+      PathPattern pathPattern = pathPatternBuilder.typeMap(ownBinding.typeMap()).build();
       boolean firstPathPart = true;
       for (PathPart pathPart : pathPattern.parts()) {
         if (!firstPathPart) {
@@ -126,7 +121,7 @@ final class RouteInjector {
         .append("    ")
         .append("toWrite = flat ? dest : new Bundle();\n");
 
-    for (FieldBinding binding: fieldBinding) {
+    for (FieldBinding binding: ownBinding.bindings()) {
       if (binding instanceof BundleableBinding) {
         emitSaveBinding(builder, (BundleableBinding) binding);
       } else {
@@ -136,7 +131,7 @@ final class RouteInjector {
 
     builder.append("\n    ")
         .append("if (!flat) dest.putBundle(\"")
-        .append(bundleKey)
+        .append(ownBinding.getName())
         .append("\", toWrite);\n");
     builder.append("  ")
         .append("}");
@@ -156,7 +151,7 @@ final class RouteInjector {
 
     builder.append("    ")
         .append("Bundle subBundle = source.getBundle(\"")
-        .append(bundleKey)
+        .append(ownBinding.getName())
         .append("\");\n");
     builder.append("    ")
         .append("if (subBundle != null) {\n");
@@ -166,7 +161,7 @@ final class RouteInjector {
     builder.append("    ")
         .append("}\n");
 
-    for (FieldBinding binding: fieldBinding) {
+    for (FieldBinding binding: ownBinding.bindings()) {
       if (binding instanceof BundleableBinding) {
         emitInjectBinding(builder, (BundleableBinding) binding);
       } else if (binding instanceof IndirectBinding) {
@@ -188,7 +183,7 @@ final class RouteInjector {
         .append(" == null) ")
         .append(fieldPath)
         .append(" = new ")
-        .append(binding.creatorName)
+        .append(binding.getClassName())
         .append("();\n");
 
     builder.append("    ")
@@ -248,13 +243,9 @@ final class RouteInjector {
   }
 
   public void addFieldBinding(FieldBinding binding) {
-    fieldBinding.add(binding);
-
-    if (binding instanceof BundleableBinding) {
-      BundleableBinding routeBinding = (BundleableBinding) binding;
-      typeMapRepo.put(routeBinding.getBundleKey(), routeBinding.getBundleMethod());
-    }
+    ownBinding.addFieldBinding(binding);
   }
+
   public void addPathPatternBuilder(PathPatternBuilder pathPattern) {
     pathPatternBuilders.add(pathPattern);
   }
