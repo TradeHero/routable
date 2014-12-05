@@ -21,6 +21,8 @@ public class Router {
 
   private Context context;
 
+
+
   /**
    * Creates a new Router
    */
@@ -55,7 +57,6 @@ public class Router {
     this.context = context.getApplicationContext();
   }
 
-
   /**
    * Map a URL to open an {@link android.app.Activity}
    *
@@ -78,7 +79,7 @@ public class Router {
     if (options == null) {
       options = new RouterOptions();
     }
-    options.setOpenClass(klass);
+    options.klass = klass;
     this.routes.put(format, options);
   }
 
@@ -123,25 +124,6 @@ public class Router {
   }
 
   /**
-   * @param url The URL; for example, "users/16" or "groups/5/topics/20"
-   * @return The {@link android.content.Intent} for the url
-   */
-  public Intent intentFor(String url) {
-    RouterParams params = this.paramsForUrl(url);
-    RouterOptions options = params.routerOptions;
-    Intent intent = new Intent();
-    if (options.getDefaultParams() != null) {
-      for (Entry<String, String> entry : options.getDefaultParams().entrySet()) {
-        intent.putExtra(entry.getKey(), entry.getValue());
-      }
-    }
-    for (Entry<String, String> entry : params.openParams.entrySet()) {
-      intent.putExtra(entry.getKey(), entry.getValue());
-    }
-    return intent;
-  }
-
-  /**
    * @param url The URL to check
    * @return Whether or not the URL refers to an anonymous callback function
    */
@@ -165,8 +147,22 @@ public class Router {
     }
 
     Intent intent = intentFor(url);
-    intent.setClass(context, options.getOpenClass());
+    intent.setClass(context, options.klass);
     this.addFlagsToIntent(intent, context);
+    return intent;
+  }
+
+  /**
+   * @param url The URL; for example, "users/16" or "groups/5/topics/20"
+   * @return The {@link android.content.Intent} for the url
+   */
+  public Intent intentFor(String url) {
+    RouterParams params = this.paramsForUrl(url);
+    RouterOptions options = params.routerOptions;
+    Intent intent = new Intent();
+    for (Entry<String, String> entry : params.openParams.entrySet()) {
+      intent.putExtra(entry.getKey(), entry.getValue());
+    }
     return intent;
   }
 
