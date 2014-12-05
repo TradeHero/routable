@@ -3,9 +3,10 @@ package p;
 
 import android.os.Bundle;
 import com.tradehero.route.Router;
+import com.tradehero.route.Router.Injector;
 
-public final class InheritTypePassing$Prop$$Routable {
-  public static void inject(final p.InheritTypePassing.Prop target, Bundle source) {
+public class InheritTypePassing$Prop$$Routable<T extends p.InheritTypePassing.Prop> implements Injector<T> {
+  @Override public void inject(final T target, Bundle source) {
     Bundle subBundle = source.getBundle("propBundleKey");
     if (subBundle != null) {
       inject(target, subBundle);
@@ -18,7 +19,7 @@ public final class InheritTypePassing$Prop$$Routable {
     }
   }
 
-  public static void save(final p.InheritTypePassing.Prop source, Bundle dest, boolean flat) {
+  @Override public void save(final T source, Bundle dest, boolean flat) {
     Bundle toWrite = null;
     toWrite = flat ? dest : new Bundle();
     toWrite.putInt("intBar", source.intBar);

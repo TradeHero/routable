@@ -1,10 +1,12 @@
+// Generated code by Route. Do not modify!
 package p;
 
 import android.os.Bundle;
 import com.tradehero.route.Router;
+import com.tradehero.route.Router.Injector;
 
-public final class AdvancedRouteProperty$A$$Routable {
-  public static void inject(final p.AdvancedRouteProperty.A target, Bundle source) {
+public class AdvancedRouteProperty$A$$Routable<T extends p.AdvancedRouteProperty.A> implements Injector<T> {
+  @Override public void inject(final T target, Bundle source) {
     Bundle subBundle = source.getBundle("p.AdvancedRouteProperty.A");
     if (subBundle != null) {
       inject(target, subBundle);
@@ -13,10 +15,11 @@ public final class AdvancedRouteProperty$A$$Routable {
     Router.getInstance().inject(target.a, source);
   }
 
-  public static void save(final p.AdvancedRouteProperty.A source, Bundle dest, boolean flat) {
+  @Override public void save(final T source, Bundle dest, boolean flat) {
     Bundle toWrite = null;
     toWrite = flat ? dest : new Bundle();
     Router.getInstance().saveSingle(toWrite, source.a, flat);
+
     if (!flat) dest.putBundle("p.AdvancedRouteProperty.A", toWrite);
   }
 }

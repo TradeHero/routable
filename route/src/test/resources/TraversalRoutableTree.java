@@ -18,6 +18,7 @@ class TraversalRoutableTree {
 
   @Routable("/api3/{d}")
   static class D extends C {
+    @RouteProperty int a;
     Integer keyD;
   }
 }

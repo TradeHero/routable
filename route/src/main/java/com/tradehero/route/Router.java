@@ -6,8 +6,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import com.tradehero.route.internal.RouterProcessor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -21,7 +19,18 @@ public class Router {
 
   private Context context;
 
+  public interface Injector<T> {
+    void inject(final T target, Bundle source);
+    void save(final T source, Bundle dest, boolean flat);
+  }
 
+  public static abstract class RoutableInjector<T> implements Injector<T> {
+    public PathPattern[] pathPatterns() { return null; }
+  }
+
+  static final Map<Class<?>, Injector<?>> INJECTORS = new LinkedHashMap<Class<?>, Injector<?>>();
+
+  static final Injector<?> NO_OP = null;
 
   /**
    * Creates a new Router
@@ -226,11 +235,6 @@ public class Router {
     return formatParams;
   }
 
-  static final Map<Class<?>, Method> INJECTORS = new LinkedHashMap<Class<?>, Method>();
-  static final Map<Class<?>, Method> SAVERS = new LinkedHashMap<Class<?>, Method>();
-
-  static final Method NO_OP = null;
-
   public void inject(Activity activity) {
     Bundle extras = activity.getIntent() != null ? activity.getIntent().getExtras() : null;
     inject(activity, extras);
@@ -240,18 +244,15 @@ public class Router {
     Class<?> targetClass = target.getClass();
     try {
       if (debug) Log.d(TAG, "Looking up injector for " + targetClass.getName());
-      Method inject = findInjectorForClass(targetClass);
-      if (inject != null) {
-        inject.invoke(null, target, extras);
+      @SuppressWarnings("unchecked")
+      Injector<Object> injector = (Injector<Object>) findInjectorForClass(targetClass);
+      if (injector != null) {
+        injector.inject(target, extras);
       }
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      Throwable t = e;
-      if (t instanceof InvocationTargetException) {
-        t = t.getCause();
-      }
-      throw new RuntimeException("Unable to inject for " + target, t);
+      throw new RuntimeException("Unable to inject for " + target, e);
     }
   }
 
@@ -291,26 +292,24 @@ public class Router {
     Class<?> targetClass = parcelable.getClass();
     try {
       if (debug) Log.d(TAG, "Looking up saver for " + targetClass.getName());
-      Method inject = findSaverForClass(targetClass);
+      @SuppressWarnings("unchecked")
+      Injector<Object> inject = (Injector<Object>) findInjectorForClass(targetClass);
       if (inject != null) {
-        inject.invoke(null, parcelable, extras, flat);
+        inject.save(parcelable, extras, flat);
       }
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      Throwable t = e;
-      if (t instanceof InvocationTargetException) {
-        t = t.getCause();
-      }
-      throw new RuntimeException("Unable to inject for " + parcelable, t);
+      throw new RuntimeException("Unable to inject for " + parcelable, e);
     }
   }
 
-  private static Method findInjectorForClass(Class<?> cls) throws NoSuchMethodException {
-    Method inject = INJECTORS.get(cls);
-    if (inject != null) {
+  private static Injector<?> findInjectorForClass(Class<?> cls)
+      throws NoSuchMethodException, IllegalAccessException, InstantiationException {
+    Injector<?> injector = INJECTORS.get(cls);
+    if (injector != null) {
       if (debug) Log.d(TAG, "HIT: Cached in injector map.");
-      return inject;
+      return injector;
     }
     String clsName = cls.getName();
     if (clsName.startsWith("android.") || clsName.startsWith("java.")) {
@@ -318,38 +317,14 @@ public class Router {
       return NO_OP;
     }
     try {
-      Class<?> injector = Class.forName(clsName + RouterProcessor.SUFFIX);
-      inject = injector.getMethod("inject", cls, Bundle.class);
+      injector = (Injector<?>) Class.forName(clsName + RouterProcessor.SUFFIX).newInstance();
       if (debug) Log.d(TAG, "HIT: Class loaded injection class.");
     } catch (ClassNotFoundException e) {
       if (debug) Log.d(TAG, "Not found. Trying superclass " + cls.getSuperclass().getName());
-      inject = findInjectorForClass(cls.getSuperclass());
+      injector = findInjectorForClass(cls.getSuperclass());
     }
-    INJECTORS.put(cls, inject);
-    return inject;
-  }
-
-  private static Method findSaverForClass(Class<?> cls) throws NoSuchMethodException {
-    Method inject = SAVERS.get(cls);
-    if (inject != null) {
-      if (debug) Log.d(TAG, "HIT: Cached in saver map.");
-      return inject;
-    }
-    String clsName = cls.getName();
-    if (clsName.startsWith("android.") || clsName.startsWith("java.")) {
-      if (debug) Log.d(TAG, "MISS: Reached framework class. Abandoning search.");
-      return NO_OP;
-    }
-    try {
-      Class<?> injector = Class.forName(clsName + RouterProcessor.SUFFIX);
-      inject = injector.getMethod("save", cls, Bundle.class, boolean.class);
-      if (debug) Log.d(TAG, "HIT: Class loaded injection class.");
-    } catch (ClassNotFoundException e) {
-      if (debug) Log.d(TAG, "Not found. Trying superclass " + cls.getSuperclass().getName());
-      // TODO: consider parent to be injected too?
-    }
-    SAVERS.put(cls, inject);
-    return inject;
+    INJECTORS.put(cls, injector);
+    return injector;
   }
 
   public Router registerRoutes(Class<?>... targets) {

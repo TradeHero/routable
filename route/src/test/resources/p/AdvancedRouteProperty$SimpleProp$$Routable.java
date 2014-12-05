@@ -2,9 +2,10 @@ package p;
 
 import android.os.Bundle;
 import com.tradehero.route.Router;
+import com.tradehero.route.Router.Injector;
 
-public final class AdvancedRouteProperty$SimpleProp$$Routable {
-  public static void inject(final p.AdvancedRouteProperty.SimpleProp target, Bundle source) {
+public class AdvancedRouteProperty$SimpleProp$$Routable<T extends p.AdvancedRouteProperty.SimpleProp> implements Injector<T> {
+  @Override public void inject(final T target, Bundle source) {
     Bundle subBundle = source.getBundle("p.AdvancedRouteProperty.SimpleProp");
     if (subBundle != null) {
       inject(target, subBundle);
@@ -14,11 +15,11 @@ public final class AdvancedRouteProperty$SimpleProp$$Routable {
     }
   }
 
-  public static void save(final p.AdvancedRouteProperty.SimpleProp source, Bundle dest,
-      boolean flat) {
+  @Override public void save(final T source, Bundle dest, boolean flat) {
     Bundle toWrite = null;
     toWrite = flat ? dest : new Bundle();
     toWrite.putString("a", source.a);
+
     if (!flat) dest.putBundle("p.AdvancedRouteProperty.SimpleProp", toWrite);
   }
 }

@@ -1,4 +1,3 @@
-// Generated code by Route. Do not modify!
 package p;
 
 import android.os.Bundle;
@@ -6,12 +5,18 @@ import com.tradehero.route.Router;
 import com.tradehero.route.DynamicPart;
 import com.tradehero.route.PathPattern;
 import com.tradehero.route.StaticPart;
+import com.tradehero.route.Router.RoutableInjector;
 
-public final class InheritTypePassing$$Routable {
+public class InheritTypePassing$$Routable<T extends p.InheritTypePassing> extends RoutableInjector<T> {
   public static PathPattern[] PATH_PATTERNS = {
-      PathPattern.create(StaticPart.create("api"), DynamicPart.create("doubleFoo", "Double", null), DynamicPart.create("intBar", "Int", null), DynamicPart.create("shortTaco", "Short", null))};
+      PathPattern.create(StaticPart.create("api"), DynamicPart.create("doubleFoo", "Double", null), DynamicPart.create("intBar", "Int", null), DynamicPart.create("shortTaco", "Short", null))
+  };
 
-  public static void inject(final p.InheritTypePassing target, Bundle source) {
+  @Override public PathPattern[] pathPatterns() {
+    return PATH_PATTERNS;
+  }
+
+  @Override public void inject(final T target, Bundle source) {
     Bundle subBundle = source.getBundle("p.InheritTypePassing");
     if (subBundle != null) {
       inject(target, subBundle);
@@ -23,7 +28,7 @@ public final class InheritTypePassing$$Routable {
     Router.getInstance().inject(target.prop, source);
   }
 
-  public static void save(final p.InheritTypePassing source, Bundle dest, boolean flat) {
+  @Override public void save(final T source, Bundle dest, boolean flat) {
     Bundle toWrite = null;
     toWrite = flat ? dest : new Bundle();
     toWrite.putDouble("doubleFoo", source.doubleFoo);

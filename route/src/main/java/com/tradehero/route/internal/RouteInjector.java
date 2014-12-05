@@ -39,11 +39,20 @@ final class RouteInjector {
       builder.append("import com.tradehero.route.DynamicPart;\n");
       builder.append("import com.tradehero.route.PathPattern;\n");
       builder.append("import com.tradehero.route.StaticPart;\n");
+      builder.append("import com.tradehero.route.Router.RoutableInjector;\n");
+    } else {
+      builder.append("import com.tradehero.route.Router.Injector;\n");
     }
     builder.append("\n");
 
     // class content
-    builder.append("public final class ").append(className).append(" {\n");
+    String inheritance = (pathPatternBuilders.size() > 0 ? " extends Routable" : " implements ")
+        + "Injector<T>";
+    builder.append("public class ")
+        .append(className)
+        .append("<T extends ").append(targetClass).append(">")
+        .append(inheritance)
+        .append(" {\n");
     if (pathPatternBuilders.size() > 0) {
       emitRoutes(builder);
       builder.append("\n\n");
@@ -55,6 +64,8 @@ final class RouteInjector {
 
       emitSaver(builder);
       builder.append("\n");
+    } else {
+      throw new IllegalStateException("Class " + targetClass + " has no injection point");
     }
 
     builder.append("}\n");
@@ -108,15 +119,20 @@ final class RouteInjector {
       }
       builder.append(")");
     }
-    builder.append("};");
+    builder.append("\n  };\n\n");
+
+    builder.append("  ").append("@Override public PathPattern[] pathPatterns() {\n");
+    builder.append("    ").append("return PATH_PATTERNS;\n");
+    builder.append("  ").append("}");
   }
 
   private void emitSaver(StringBuilder builder) {
     builder.append("  ")
-        .append("public static void save(final ")
-        .append(targetClass)
-        .append(" source, Bundle dest, boolean flat) {\n");
+        .append("@Override public void save(final T source, Bundle dest, boolean flat) {\n");
 
+    if (parentInjector != null) {
+      builder.append("    super.save(source, dest, flat);");
+    }
     builder.append("    ")
         .append("Bundle toWrite = null;\n")
         .append("    ")
@@ -140,14 +156,9 @@ final class RouteInjector {
 
   private void emitInject(StringBuilder builder) {
     builder.append("  ")
-        .append("public static void inject(final ")
-        .append(targetClass)
-        .append(" target, Bundle source) {\n");
-    // Emit a call to the superclass injector, if any.
+        .append("@Override public void inject(final T target, Bundle source) {\n");
     if (parentInjector != null) {
-      builder.append("    ")
-          .append(parentInjector)
-          .append(".inject(target, source);\n\n");
+      builder.append("    super.inject(target, source);\n\n");
     }
 
     builder.append("    ")
