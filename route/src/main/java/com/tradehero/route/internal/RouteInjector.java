@@ -9,20 +9,21 @@ import java.util.Set;
 
 final class RouteInjector {
   private final String classPackage;
+  private final String className;
   private final String targetClass;
-  private final IndirectBinding ownBinding;
+  private final ClassBinding ownBinding;
   private final Set<PathPatternBuilder> pathPatternBuilders = new LinkedHashSet<PathPatternBuilder>();
   private String parentInjector;
 
   RouteInjector(String classPackage, String className, String targetClass, String bundleKey) {
     this.classPackage = classPackage;
+    this.className = className;
     this.targetClass = targetClass;
-    this.ownBinding = new IndirectBinding(bundleKey, className);
+    this.ownBinding = new ClassBinding(bundleKey);
   }
 
   String getFqcn() {
-    return (Utils.isNullOrEmpty(classPackage) ? "" : classPackage + ".") +
-        ownBinding.getClassName();
+    return (Utils.isNullOrEmpty(classPackage) ? "" : classPackage + ".") + className;
   }
 
   String brewJava() {
@@ -42,7 +43,7 @@ final class RouteInjector {
     builder.append("\n");
 
     // class content
-    builder.append("public final class ").append(ownBinding.getClassName()).append(" {\n");
+    builder.append("public final class ").append(className).append(" {\n");
     if (pathPatternBuilders.size() > 0) {
       emitRoutes(builder);
       builder.append("\n\n");
@@ -252,5 +253,9 @@ final class RouteInjector {
 
   public void setParentInjector(String parentInjector) {
     this.parentInjector = parentInjector;
+  }
+
+  public ClassBinding getOwnBinding() {
+    return ownBinding;
   }
 }

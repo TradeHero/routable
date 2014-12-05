@@ -1,13 +1,10 @@
 package com.tradehero.route.internal;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 
 class IndirectBinding extends FieldBinding {
-  private final Set<FieldBinding> childBinding = new LinkedHashSet<FieldBinding>();
   private final String className;
+  private final ClassBinding classBinding;
 
   /**
    * Binding for custom type, also see {@link com.tradehero.route.internal.BundleableBinding}
@@ -15,29 +12,17 @@ class IndirectBinding extends FieldBinding {
    *  - name: val
    *  - className: com.example.SomeType
    */
-  public IndirectBinding(String name, String className) {
+  public IndirectBinding(String name, String className, ClassBinding classBinding) {
     super(name);
     this.className = className;
+    this.classBinding = classBinding;
   }
 
   public String getClassName() {
     return className;
   }
 
-  public void addFieldBinding(FieldBinding fieldBinding) {
-    childBinding.add(fieldBinding);
-  }
-
-  public Set<FieldBinding> bindings() {
-    return childBinding;
-  }
-
-  // TODO be lazy
-  public Map<String, BundleType> typeMap() {
-    Map<String, BundleType> result = new LinkedHashMap<String, BundleType>();
-    for (FieldBinding binding: childBinding) {
-      result.putAll(binding.typeMap());
-    }
-    return result;
+  @Override public Map<String, BundleType> typeMap() {
+    return classBinding.typeMap();
   }
 }

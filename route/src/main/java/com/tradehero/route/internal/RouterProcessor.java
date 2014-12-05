@@ -1,6 +1,5 @@
 package com.tradehero.route.internal;
 
-import com.sun.tools.javac.code.Type;
 import com.tradehero.route.Routable;
 import com.tradehero.route.RouteProperty;
 import java.io.IOException;
@@ -29,6 +28,7 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.JavaFileObject;
 
+import static com.sun.tools.javac.code.Type.ClassType;
 import static com.tradehero.route.internal.Utils.debug;
 import static com.tradehero.route.internal.Utils.stackTraceToString;
 import static javax.lang.model.element.ElementKind.CLASS;
@@ -37,7 +37,6 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.tools.Diagnostic.Kind;
 import static javax.tools.Diagnostic.Kind.ERROR;
-import static javax.tools.Diagnostic.Kind.NOTE;
 import static javax.tools.Diagnostic.Kind.WARNING;
 
 public class RouterProcessor extends AbstractProcessor {
@@ -169,10 +168,11 @@ public class RouterProcessor extends AbstractProcessor {
     RouteInjector routeInjector = getOrCreateTargetRoutePropertyClass(targetClassMap, enclosingElement);
     String name = element.getSimpleName().toString();
     if (bundleMethod == null) {
-      message(NOTE, element, (isMethod ? "Method" : "Field") + " %s type is not bundle-able, "
-              + "indirect injection will be taking place!",
-          element.getSimpleName());
-      FieldBinding binding = new IndirectBinding(name, elementType.toString());
+      TypeElement fieldTypeElement = (TypeElement) ((ClassType) elementType).asElement();
+      RouteInjector fieldRouteInjector =
+          getOrCreateTargetRoutePropertyClass(targetClassMap, fieldTypeElement);
+      IndirectBinding binding = new IndirectBinding(name, elementType.toString(),
+          fieldRouteInjector.getOwnBinding());
       routeInjector.addFieldBinding(binding);
     } else {
       String bundleKey = element.getAnnotation(RouteProperty.class).value();
@@ -217,8 +217,8 @@ public class RouterProcessor extends AbstractProcessor {
   static Element findClosestRoutableAncestor(TypeElement typeElement,
       Set<String> injectableTargetClasses) {
     TypeMirror typeMirror = typeElement.getSuperclass();
-    while (!reachedBaseClasses(typeMirror.toString()) && typeMirror instanceof Type.ClassType) {
-      Element currentElement = ((Type.ClassType) typeMirror).asElement();
+    while (!reachedBaseClasses(typeMirror.toString()) && typeMirror instanceof ClassType) {
+      Element currentElement = ((ClassType) typeMirror).asElement();
       /** If current class is already processed */
       if (injectableTargetClasses.contains(currentElement.toString())) {
         return null;
