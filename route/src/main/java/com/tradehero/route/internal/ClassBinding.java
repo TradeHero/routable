@@ -5,8 +5,9 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class ClassBinding extends FieldBinding {
+final class ClassBinding extends FieldBinding {
   private final Set<FieldBinding> childBinding = new LinkedHashSet<FieldBinding>();
+
   protected ClassBinding(String name) {
     super(name);
   }

@@ -9,13 +9,12 @@ import com.tradehero.route.internal.RouterProcessor;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 public class Router {
   private static final String TAG = "Router";
   private static boolean debug = true;
-  protected final Map<String, RouterOptions> routes = new HashMap<String, RouterOptions>();
-  protected final Map<String, RouterParams> cachedRoutes = new HashMap<String, RouterParams>();
+  protected final Map<String, Class<? extends Activity>> routes =
+      new HashMap<String, Class<? extends Activity>>();
 
   private Context context;
 
@@ -71,25 +70,10 @@ public class Router {
    *
    * @param format The URL being mapped; for example, "users/:id" or "groups/:id/topics/:topic_id"
    * @param klass The {@link android.app.Activity} class to be opened with the URL
-   */
-  public void map(String format, Class<? extends Activity> klass) {
-    this.map(format, klass, null);
-  }
-
-  /**
-   * Map a URL to open an {@link android.app.Activity}
-   *
-   * @param format The URL being mapped; for example, "users/:id" or "groups/:id/topics/:topic_id"
-   * @param klass The {@link android.app.Activity} class to be opened with the URL
-   * @param options The {@link RouterOptions} to be used for more granular and customized options
    * for when the URL is opened
    */
-  public void map(String format, Class<? extends Activity> klass, RouterOptions options) {
-    if (options == null) {
-      options = new RouterOptions();
-    }
-    options.klass = klass;
-    this.routes.put(format, options);
+  public void map(String format, Class<? extends Activity> klass) {
+    this.routes.put(format, klass);
   }
 
   /**
@@ -108,12 +92,6 @@ public class Router {
     if (context == null) {
       throw new RuntimeException("You need to supply a context for Router " + this.toString());
     }
-    RouterParams params = this.paramsForUrl(url);
-    RouterOptions options = params.routerOptions;
-    if (options.getCallback() != null) {
-      options.getCallback().run(params.openParams);
-      return;
-    }
 
     Intent intent = this.intentFor(context, url);
     if (intent == null) {
@@ -124,115 +102,18 @@ public class Router {
   }
 
   /**
-   * @param url The URL to check
-   * @return Whether or not the URL refers to an anonymous callback function
-   */
-  public boolean isCallbackUrl(String url) {
-    RouterParams params = this.paramsForUrl(url);
-    RouterOptions options = params.routerOptions;
-    return options.getCallback() != null;
-  }
-
-  /**
    * @param context The context which is spawning the intent
    * @param url The URL; for example, "users/16" or "groups/5/topics/20"
    * @return The {@link android.content.Intent} for the url, with the correct {@link
    * android.app.Activity} set, or null.
    */
   public Intent intentFor(Context context, String url) {
-    RouterParams params = this.paramsForUrl(url);
-    RouterOptions options = params.routerOptions;
-    if (options.getCallback() != null) {
-      return null;
-    }
-
-    Intent intent = intentFor(url);
-    intent.setClass(context, options.klass);
+    Intent intent = new Intent();
+    //intent.setClass(context, options.klass);
     if (context == this.context) {
       intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     }
     return intent;
-  }
-
-  /**
-   * @param url The URL; for example, "users/16" or "groups/5/topics/20"
-   * @return The {@link android.content.Intent} for the url
-   */
-  public Intent intentFor(String url) {
-    RouterParams params = this.paramsForUrl(url);
-    Intent intent = new Intent();
-    for (Entry<String, String> entry : params.openParams.entrySet()) {
-      intent.putExtra(entry.getKey(), entry.getValue());
-    }
-    return intent;
-  }
-
-  /*
-   * Takes a url (i.e. "/users/16/hello") and breaks it into a {@link RouterParams} instance where
-   * each of the parameters (like ":id") has been parsed.
-   */
-  protected RouterParams paramsForUrl(String url) {
-    if (this.cachedRoutes.get(url) != null) {
-      return this.cachedRoutes.get(url);
-    }
-
-    String[] givenParts = url.split("/");
-
-    RouterOptions openOptions = null;
-    RouterParams openParams = null;
-    for (Entry<String, RouterOptions> entry : this.routes.entrySet()) {
-      String routerUrl = entry.getKey();
-      RouterOptions routerOptions = entry.getValue();
-      String[] routerParts = routerUrl.split("/");
-
-      if (routerParts.length != givenParts.length) {
-        continue;
-      }
-
-      Map<String, String> givenParams = urlToParamsMap(givenParts, routerParts);
-      if (givenParams == null) {
-        continue;
-      }
-
-      openOptions = routerOptions;
-      openParams = new RouterParams(givenParams, routerOptions);
-      break;
-    }
-
-    if (openOptions == null) {
-      throw new RouteNotFoundException("No route found for url " + url);
-    }
-
-    this.cachedRoutes.put(url, openParams);
-    return openParams;
-  }
-
-  /**
-   * @param givenUrlSegments An array representing the URL path attempting to be opened (i.e.
-   * ["users", "42"])
-   * @param routerUrlSegments An array representing a possible URL match for the router (i.e.
-   * ["users", ":id"])
-   * @return A map of URL parameters if it's a match (i.e. {"id" => "42"}) or null if there is no
-   * match
-   */
-  private Map<String, String> urlToParamsMap(String[] givenUrlSegments, String[] routerUrlSegments) {
-    Map<String, String> formatParams = new HashMap<String, String>();
-    for (int index = 0; index < routerUrlSegments.length; index++) {
-      String routerPart = routerUrlSegments[index];
-      String givenPart = givenUrlSegments[index];
-
-      if (routerPart.charAt(0) == ':') {
-        String key = routerPart.substring(1, routerPart.length());
-        formatParams.put(key, givenPart);
-        continue;
-      }
-
-      if (!routerPart.equals(givenPart)) {
-        return null;
-      }
-    }
-
-    return formatParams;
   }
 
   public void inject(Activity activity) {
@@ -256,11 +137,7 @@ public class Router {
     }
   }
 
-  /**
-   * Save POJO to bundle with hierarchy
-   * @param extras
-   * @param parcelables
-   */
+  /** Save POJO to bundle with hierarchy */
   public void save(Bundle extras, Object... parcelables) {
     if (parcelables == null) return;
 
@@ -277,11 +154,7 @@ public class Router {
     }
   }
 
-  /**
-   * Save POJO to bundle without hierarchy
-   * @param extras
-   * @param parcelables
-   */
+  /** Save POJO to bundle without hierarchy */
   public void saveFlat(Bundle extras, Object... parcelables) {
     for (Object parcelable: parcelables) {
       saveSingle(extras, parcelable, true);
