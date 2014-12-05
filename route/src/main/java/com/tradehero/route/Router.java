@@ -114,15 +114,6 @@ public class Router {
     context.startActivity(intent);
   }
 
-  /*
-   * Allows Intents to be spawned regardless of what context they were opened with.
-   */
-  private void addFlagsToIntent(Intent intent, Context context) {
-    if (context == this.context) {
-      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-    }
-  }
-
   /**
    * @param url The URL to check
    * @return Whether or not the URL refers to an anonymous callback function
@@ -148,7 +139,9 @@ public class Router {
 
     Intent intent = intentFor(url);
     intent.setClass(context, options.klass);
-    this.addFlagsToIntent(intent, context);
+    if (context == this.context) {
+      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    }
     return intent;
   }
 
@@ -158,7 +151,6 @@ public class Router {
    */
   public Intent intentFor(String url) {
     RouterParams params = this.paramsForUrl(url);
-    RouterOptions options = params.routerOptions;
     Intent intent = new Intent();
     for (Entry<String, String> entry : params.openParams.entrySet()) {
       intent.putExtra(entry.getKey(), entry.getValue());
@@ -194,9 +186,7 @@ public class Router {
       }
 
       openOptions = routerOptions;
-      openParams = new RouterParams();
-      openParams.openParams = givenParams;
-      openParams.routerOptions = routerOptions;
+      openParams = new RouterParams(givenParams, routerOptions);
       break;
     }
 

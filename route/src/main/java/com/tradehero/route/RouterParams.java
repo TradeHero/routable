@@ -2,7 +2,12 @@ package com.tradehero.route;
 
 import java.util.Map;
 
-public class RouterParams {
-  public RouterOptions routerOptions;
-  public Map<String, String> openParams;
+class RouterParams {
+  RouterOptions routerOptions;
+  Map<String, String> openParams;
+
+  public RouterParams(Map<String, String> givenParams, RouterOptions routerOptions) {
+    this.openParams = givenParams;
+    this.routerOptions = routerOptions;
+  }
 }
