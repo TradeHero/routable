@@ -16,7 +16,7 @@ public class MainActivity extends Activity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
-    router = ((App) getApplication()).getRouter();
+    router = App.get(this).getRouter();
 
     TextView openByRoute = (TextView) findViewById(R.id.open_by_route);
     openByRoute.setOnClickListener(new View.OnClickListener() {

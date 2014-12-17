@@ -12,7 +12,7 @@ public class UserActivity extends DummySuperActivity {
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    Router router = ((App) getApplication()).getRouter();
+    Router router = App.get(this).getRouter();
     router.inject(this);
 
     setContentView(R.layout.user);

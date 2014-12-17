@@ -58,6 +58,8 @@ final class RouteInjector {
       builder.append("\n\n");
     }
 
+    emitConstructor(builder);
+
     if (ownBinding.bindings().size() > 0) {
       emitInject(builder);
       builder.append("\n\n");
@@ -71,6 +73,15 @@ final class RouteInjector {
     builder.append("}\n");
 
     return builder.toString();
+  }
+
+  private void emitConstructor(StringBuilder builder) {
+    builder.append("  ")
+        .append("private final Router router;\n\n");
+
+    builder.append("  ")
+        .append("public ").append(className)
+        .append("(Router router) { this.router = router; }\n\n");
   }
 
   private void emitRoutes(StringBuilder builder) {
@@ -199,7 +210,7 @@ final class RouteInjector {
         .append("();\n");
 
     builder.append("    ")
-        .append("Router.getInstance().inject(target.")
+        .append("router.inject(target.")
         .append(binding.getName())
         .append(", source);\n");
   }
@@ -248,7 +259,7 @@ final class RouteInjector {
 
   private void emitRedirectSaveBinding(StringBuilder builder, FieldBinding binding) {
     builder.append("    ")
-        .append("Router.getInstance().saveSingle(toWrite, source.")
+        .append("router.saveSingle(toWrite, source.")
         .append(binding.getName())
         .append(", flat)")
         .append(";\n");

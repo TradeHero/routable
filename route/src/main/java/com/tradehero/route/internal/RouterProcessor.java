@@ -33,6 +33,7 @@ import javax.tools.JavaFileObject;
 
 import static com.sun.tools.javac.code.Type.ClassType;
 import static com.tradehero.route.internal.Utils.debug;
+import static com.tradehero.route.internal.Utils.isNullOrEmpty;
 import static com.tradehero.route.internal.Utils.stackTraceToString;
 import static javax.lang.model.element.ElementKind.CLASS;
 import static javax.lang.model.element.ElementKind.METHOD;
@@ -95,14 +96,17 @@ public class RouterProcessor extends AbstractProcessor {
     String packageName = getPackageName(element);
     String classNameStandalone = getClassName(className, packageName);
     StringBuilder stringBuilder = new StringBuilder();
-    stringBuilder.append("package ").append(packageName).append(";\n");
+    if (!isNullOrEmpty(packageName)) {
+      stringBuilder.append("package ").append(packageName).append(";\n");
+    }
     stringBuilder.append("final class ")
         .append(classNameStandalone)
         .append(" extends ")
-        .append(getClassName(element, packageName))
+        .append(element.getQualifiedName())
         .append(" {\n")
         .append(classNameStandalone)
-        .append("() {}")
+        .append("() {}\n\n")
+        .append("@Override public void open(String url) {}")
         .append("\n}");
     return stringBuilder.toString();
   }

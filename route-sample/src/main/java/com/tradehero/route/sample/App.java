@@ -1,6 +1,7 @@
 package com.tradehero.route.sample;
 
 import android.app.Application;
+import android.content.Context;
 import com.tradehero.route.Router;
 
 public class App extends Application {
@@ -9,12 +10,14 @@ public class App extends Application {
   @Override public void onCreate() {
     super.onCreate();
 
-    router = Router.getInstance();
-    router.setContext(this);
-    router.registerRoutes(UserActivity.class);
+    router = TestRouter.create();
   }
 
   public Router getRouter() {
     return router;
+  }
+
+  public static App get(Context context) {
+    return (App) context.getApplicationContext();
   }
 }
