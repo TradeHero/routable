@@ -11,6 +11,7 @@ import java.util.Map;
 public abstract class Router {
   private static final String TAG = "Router";
   private static boolean debug = true;
+  private Map<PathPattern, Class<?>> pathPatternsMap = new LinkedHashMap<PathPattern, Class<?>>();
 
   public interface Injector<T> {
     void inject(final T target, Bundle source);
@@ -36,6 +37,12 @@ public abstract class Router {
    * @param url The URL; for example, "users/16" or "groups/5/topics/20"
    */
   public abstract void open(String url);
+
+  protected void registerRoute(PathPattern[] pathPatterns, Class<?> targetClass) {
+    for (PathPattern pathPattern: pathPatterns) {
+      pathPatternsMap.put(pathPattern, targetClass);
+    }
+  }
 
   public void inject(Activity activity) {
     Bundle extras = activity.getIntent() != null ? activity.getIntent().getExtras() : null;

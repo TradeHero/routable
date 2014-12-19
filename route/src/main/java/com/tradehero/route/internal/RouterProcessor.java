@@ -68,7 +68,7 @@ public class RouterProcessor extends AbstractProcessor {
 
     for (Element element : env.getElementsAnnotatedWith(RouterInstance.class)) {
       try {
-        processRouterInstance((TypeElement) element);
+        processRouterInstance((TypeElement) element, routeInjectorMap);
       } catch (Exception e) {
         error(element, "Unable to generate injector for @RouteProperty\n%s", stackTraceToString(e));
       }
@@ -76,7 +76,8 @@ public class RouterProcessor extends AbstractProcessor {
     return true;
   }
 
-  private void processRouterInstance(TypeElement typeElement) {
+  private void processRouterInstance(TypeElement typeElement,
+      Map<TypeElement, RouteInjector> routeInjectors) {
     RouterInstance routerInstance = typeElement.getAnnotation(RouterInstance.class);
 
     if (typeElement.getKind() != ElementKind.CLASS) {
@@ -96,11 +97,12 @@ public class RouterProcessor extends AbstractProcessor {
       return;
     }
 
-    String content = generateRouterInstanceSource(typeElement, routerInstance);
+    String content = generateRouterInstanceSource(typeElement, routerInstance, routeInjectors);
     writeSourceFile(generatedSubclassName(typeElement), content, typeElement);
   }
 
-  private String generateRouterInstanceSource(TypeElement element, RouterInstance routerInstance) {
+  private String generateRouterInstanceSource(TypeElement element, RouterInstance routerInstance,
+      Map<TypeElement, RouteInjector> routeInjectors) {
     String className = generatedSubclassName(element);
     String packageName = getPackageName(element);
     String classNameStandalone = getClassName(className, packageName);
@@ -115,7 +117,34 @@ public class RouterProcessor extends AbstractProcessor {
         .append(" {\n")
         .append("  ")
         .append(classNameStandalone)
-        .append("() {}\n\n")
+        .append("() {\n");
+
+    /**
+     * Generate mapping between routes and target class to open with that route.
+     *
+     * TODO By generating a map without any order, the {@link com.tradehero.route.Router#open(String)}
+     * will have to do a bubble sort O(n) to find the match for each url. Since the search for
+     * matches have to be done in runtime, we need to improve it. By generate indexes for routes, or
+     * by generate a sorted map in compilation time, we can make runtime matching process faster
+     * with O(log(n)) using binary search.
+     * <pre>
+     * A collection of PathPatterns can be ordered by compare static parts and dynamic parts
+     * separately.
+     */
+    for (Map.Entry<TypeElement, RouteInjector> routeInjector: routeInjectors.entrySet()) {
+      ClassBinding classBinding = routeInjector.getValue().getOwnBinding();
+      Routable routable = routeInjector.getKey().getAnnotation(Routable.class);
+      if (routable != null && routable.value().length > 0) {
+        builder.append("    ")
+            .append("registerRoute(")
+            .append(routeInjector.getValue().className)
+            .append(".PATH_PATTERNS, ")
+            .append(classBinding.getName()).append(".class")
+            .append(");\n");
+      }
+    }
+    builder.append("  ")
+        .append("}\n\n")
         .append("  ")
         .append("@Override public void open(String url) {");
 

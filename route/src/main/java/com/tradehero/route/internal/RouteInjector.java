@@ -8,12 +8,12 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 final class RouteInjector {
-  private final String classPackage;
-  private final String className;
-  private final String targetClass;
-  private final ClassBinding ownBinding;
-  private final Set<PathPatternBuilder> pathPatternBuilders = new LinkedHashSet<PathPatternBuilder>();
-  private String parentInjector;
+  final String classPackage;
+  final String className;
+  final String targetClass;
+  final ClassBinding ownBinding;
+  final Set<PathPatternBuilder> pathPatternBuilders = new LinkedHashSet<PathPatternBuilder>();
+  String parentInjector;
 
   RouteInjector(String classPackage, String className, String targetClass, String bundleKey) {
     this.classPackage = classPackage;
