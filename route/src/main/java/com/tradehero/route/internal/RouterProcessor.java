@@ -1,8 +1,9 @@
 package com.tradehero.route.internal;
 
 import com.tradehero.route.Routable;
-import com.tradehero.route.RouterInstance;
 import com.tradehero.route.RouteProperty;
+import com.tradehero.route.Router;
+import com.tradehero.route.RouterInstance;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
@@ -80,11 +81,19 @@ public class RouterProcessor extends AbstractProcessor {
 
     if (typeElement.getKind() != ElementKind.CLASS) {
       error(typeElement, "@" + RouterInstance.class.getSimpleName() + " only applies to classes");
+      return;
     }
 
     if (ancestorIsRouterInstance(typeElement)) {
-      error(typeElement, "One @" + RouterInstance.class.getSimpleName() + " class may not extend another",
-          typeElement.asType());
+      error(typeElement, "One @" + RouterInstance.class.getSimpleName() +
+              " class may not extend another", typeElement.asType());
+      return;
+    }
+
+    if (!isSubClassOfRouter(typeElement)) {
+      error(typeElement, "One @" + RouterInstance.class.getSimpleName() +
+          " need to extend " + Router.class.getName(), typeElement.asType());
+      return;
     }
 
     String content = generateRouterInstanceSource(typeElement, routerInstance);
@@ -95,20 +104,23 @@ public class RouterProcessor extends AbstractProcessor {
     String className = generatedSubclassName(element);
     String packageName = getPackageName(element);
     String classNameStandalone = getClassName(className, packageName);
-    StringBuilder stringBuilder = new StringBuilder();
+    StringBuilder builder = new StringBuilder();
     if (!isNullOrEmpty(packageName)) {
-      stringBuilder.append("package ").append(packageName).append(";\n");
+      builder.append("package ").append(packageName).append(";\n");
     }
-    stringBuilder.append("final class ")
+    builder.append("final class ")
         .append(classNameStandalone)
         .append(" extends ")
         .append(element.getQualifiedName())
         .append(" {\n")
+        .append("  ")
         .append(classNameStandalone)
         .append("() {}\n\n")
-        .append("@Override public void open(String url) {}")
-        .append("\n}");
-    return stringBuilder.toString();
+        .append("  ")
+        .append("@Override public void open(String url) {");
+
+    builder.append("}").append("\n}");
+    return builder.toString();
   }
 
   private void writeSourceFile(String fileName, String content, TypeElement typeElement) {
@@ -160,6 +172,21 @@ public class RouterProcessor extends AbstractProcessor {
         return true;
       }
       type = parentElement;
+    }
+  }
+
+  private boolean isSubClassOfRouter(TypeElement type) {
+    while (true) {
+      // TODO need to find better test
+      if (Router.class.getName().equalsIgnoreCase(type.getSuperclass().toString())) {
+        return true;
+      }
+      TypeMirror parentMirror = type.getSuperclass();
+      if (parentMirror.getKind() == TypeKind.NONE) {
+        return false;
+      }
+      Types typeUtils = processingEnv.getTypeUtils();
+      type = (TypeElement) typeUtils.asElement(parentMirror);
     }
   }
 
